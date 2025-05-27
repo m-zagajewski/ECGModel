@@ -1,4 +1,7 @@
-.idea/
-data/
+/.idea/
 example_output/
 config/
+__pycache__
+/data/
+.DS_Store
+workspace.xml
