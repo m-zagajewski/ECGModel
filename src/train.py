@@ -359,7 +359,7 @@ def main():
     """Main function to run the training script."""
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Train multimodal mortality prediction model')
-    parser.add_argument('--config', type=str, default='config/model_config.json', help='Path to configuration file (default: config/model_config.json)')
+    parser.add_argument('--config', type=str, default='../config/model_config.json', help='Path to configuration file (default: config/model_config.json)')
     parser.add_argument('--device', type=str, default='cuda', help='Device to use for training')
     args = parser.parse_args()
 
