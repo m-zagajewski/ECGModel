@@ -22,19 +22,73 @@ def process_excel_data(file_path="../../data/clinical_data.xlsx", debug=False) -
     df_raw = pd.read_excel(file_path)
     print(f"Successfully loaded the excel file")
     admissible_features = [
-        "WIEK",  # Age
-        "PLEC",  # Gender
+        "WIEK",
+        "PLEC",
         "male sex",
         "GLASGOW",
-        "Operowany przed przyjęciem (0/1)",  # Surgery before admission (0/1)
-        "CH_PRZEW_Brak",  # Lack of chronic diseases
-        "marskość wątroby i nadciśnienie wrotne",  # Liver cirrhosis and portal hypertension
-        "niewydolność krążenia_NYHA IV",  # Heart failure NYHA IV
-        "przewlekłe ciężkie choroby układu oddechowego",  # Chronic severe respiratory diseases
-        "niewydolność nerek wymagajaca dializ",  # Kidney failure requiring dialysis
-        "obniżenie odporności",  # Immunosuppression
-        # ...existing feature list...
-    ] # Thanks to Karol and Witek
+        "Operowany przed przyjęciem (0/1)",
+        "CH_PRZEW_Brak",
+        "marskość wątroby i nadciśnienie wrotne",
+        "niewydolność krążenia_NYHA IV",
+        "przewlekłe ciężkie choroby układu oddechowego",
+        "niewydolność nerek wymagajaca dializ",
+        "obniżenie odporności",
+        "GLASGOW.1",
+        "MAP 1sza doba",
+        "pao2/fio2 1sza doba",
+        "BILI TISS 1",
+        "Wentylacja mechaniczna TAK=1, NIE =0 (TISS nr 1)",
+        "dopamina przyjęcie tak=1, nie = 0 (TISS nr 1)",
+        "dopamina  dawka (TISS nr 1)",
+        "noradrenalina przyjęcie: tak=1, nie =0 (TISS nr 1)",
+        "noradrenalina przyjęcie dawka ug/kg/min (TISS nr 1)",
+        "dobutamina przyjęcie tak=1, nie =0 (TISS nr 1)",
+        "CTK skurczowe przyjęcie (TISS nr 1)",
+        "CTK rozkurczowe przyjęcie (TISS nr 1)",
+        "akcja serca przyjęcie (TISS nr 1)",
+        "temperatura ciała przy przyjęciu (TISS nr 1)",
+        "FIO2 (TISS nr 1)",
+        "Antybiotyki Tak=1, NIE =0)",
+        "argipresyna/empesin TAK=1, NIE=0 (TISS nr 1 godz. 0.00)",
+        "argipresyna dawka  (TISS nr 1 godz. 0.00)",
+        "diureza w ml w ciągu pierwszych 6 godzin od przyjęcia ",
+        "podaż płynów w dobie przyjęcia (ml) - okienko \"RAZEM\" po prawej stronie pod wierszem \"woda endogenna\" (TISS nr 1)",
+        "bilans płynów w dobie przyjęcia (ml) (TISS 1)",
+        "pH (1. gaz. 1 TISS)",
+        "pCO2 (1. gaz. 1 TISS)",
+        "pO2 (1. gaz. 1 TISS)",
+        "Hb (1. gaz. 1 TISS)",
+        "K (1. gaz. 1 TISS)",
+        "Na (1. gaz. 1 TISS)",
+        "Ca2+ (1. gaz. 1 TISS)",
+        "Cl (1. gaz. 1 TISS)",
+        "sodium chloride difference",
+        "Glukoza (1. gaz. 1sza doba)",
+        "Lac (1. gaz. 1sza doba)",
+        "Crea (1. gaz. 1 TISS)",
+        "Bil (1. gaz. 1 TISS)",
+        "BE (1. gaz. 1sza doba)",
+        "HCO3 (1. gaz. 1 TISS)",
+        "mOsm (1. gaz. 1 TISS)",
+        "COVID-19",
+        "cukrzyca",
+        "nadciśnienie",
+        "niewydolność nerek przewlekła",
+        "POCHP",
+        "astma",
+        "niewydolność wątroby przewlekła",
+        "przewlekła choroba niedokrwienna serca",
+        "stan po przebyciu zawału serca",
+        "niewydolność serca przewlekła",
+        "czynna choroba nowotworowa",
+        "migotanie przedsionków -jakiekolwiek",
+        "choroby psychiczne (depresja, schizofrenia, otępienie)",
+        "choroby neurologiczne (Ch. Parkinsona, choroby nerwowo-mięśniowe)",
+        "Sepsa (0/1)",
+        "sodium chloride difference tiss 1",
+        "sodium chloride difference tiss 2",
+        "sodium chloride difference tiss 3"
+    ]  # Thanks to Karol and Witek
 
     # Filter the DataFrame to keep only admissible features
     df = df_raw.loc[:, admissible_features + ["ZGON wewnątrzszpitalnie"]]  # Hospital mortality
@@ -55,9 +109,12 @@ def process_excel_data(file_path="../../data/clinical_data.xlsx", debug=False) -
     print("Successfully processed the Excel file")
 
     if debug:
-        # ...existing debug code...
+        print(f"DataFrame index type: {type(df.index[0]) if len(df.index) > 0 else 'empty'}")
+        print(f"First 5 IDs: {df.index[:5].tolist() if len(df.index) >= 5 else df.index.tolist()}")
+        print(f"First 5 rows of the DataFrame:\n{df.head()}")
 
     return df
+
 
 if __name__ == "__main__":
     # Set the path to your Excel file

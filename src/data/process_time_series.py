@@ -524,12 +524,14 @@ def process_time_series_data(file_path="../../data/ecg", debug=False, show_progr
         if df[col].dtype.kind in 'f':  # Only float columns
             df[col] = df[col].fillna(df[col].median())
 
+    df = cleaned_up(df)
+
     if debug:
         print(f"Extracted {len(df)} cases with {len(df.columns)} features")
     elif show_progress:
         print(f"Extracted {len(df)} cases with {len(df.columns)} features")
 
-    return cleaned_up(df)
+    return df
 
 
 if __name__ == "__main__":
