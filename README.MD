@@ -22,3 +22,7 @@ Wynikowy plik z kompletem cech to:
   - wynik śmiertelności szpitalnej (`ZGON`)
 
 Szczegóły wyboru cech znajdują się w plikach `process_excel_data.py` oraz `process_time_series.py`.
+
+## Uwaga:  
+- Plik `clinical_data.xlsx` oraz folder `ecg/` z plikami .json muszą być obecne w katalogu `data/` przed uruchomieniem przetwarzania.
+- Pozostałe pliki CSV są generowane automatycznie przez skrypty.
