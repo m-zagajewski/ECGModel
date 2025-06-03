@@ -3,7 +3,7 @@ import json
 import numpy as np
 
 # Set path to ECG data directory
-ecg_data_dir = "data/ecg"
+ecg_data_dir = "../../data/ecg"
 
 # Get a list of ECG JSON files
 ecg_files = [f for f in os.listdir(ecg_data_dir) if f.endswith('.json')]
