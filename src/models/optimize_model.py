@@ -9,7 +9,9 @@ from model_implementations import (
     RandomForestModel,
     GradientBoostingModel,
     SVMModel,
-    LogisticRegressionModel
+    LogisticRegressionModel,
+    CatBoostModel,
+    XGBoostModel
 )
 from sklearn.model_selection import StratifiedKFold
 
@@ -39,6 +41,21 @@ class ModelOptimizer:
             'C': Real(0.1, 10, prior='log-uniform'),
             'penalty': Categorical(['l1', 'l2']),
             'solver': Categorical(['liblinear', 'saga'])
+        },
+        CatBoostModel: {
+            'iterations': Integer(200, 2000),
+            'learning_rate': Real(0.005, 0.3, prior='log-uniform'),
+            'depth': Integer(4, 10),
+            # 'l2_leaf_reg': Real(1, 10, prior='log-uniform'),
+            'verbose': Categorical([False])
+        },
+        XGBoostModel: {
+            'n_estimators': Integer(50, 300),
+            'learning_rate': Real(0.001, 0.3, prior='log-uniform'),
+            'max_depth': Integer(3, 10),
+            'min_child_weight': Integer(1, 10),
+            'subsample': Real(0.5, 1.0, prior='uniform'),
+            'colsample_bytree': Real(0.5, 1.0, prior='uniform')
         }
     }
 
@@ -119,7 +136,9 @@ def main():
         'random_forest': RandomForestModel,
         'gradient_boosting': GradientBoostingModel,
         'svm': SVMModel,
-        'logistic_regression': LogisticRegressionModel
+        'logistic_regression': LogisticRegressionModel,
+        'catboost': CatBoostModel,
+        'xgboost': XGBoostModel
     }
 
     # Get user input for model selection

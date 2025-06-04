@@ -3,7 +3,9 @@ from model_implementations import (
     RandomForestModel,
     GradientBoostingModel,
     SVMModel,
-    LogisticRegressionModel
+    LogisticRegressionModel,
+    CatBoostModel,
+    XGBoostModel
 )
 from model_evaluation import ModelEvaluator
 
@@ -26,7 +28,9 @@ def main():
         GradientBoostingModel(n_estimators=100, learning_rate=0.01),
         SVMModel(kernel='rbf', C=1.0),
         SVMModel(kernel='linear', C=1.0),
-        LogisticRegressionModel(C=1.0)
+        LogisticRegressionModel(C=1.0),
+        CatBoostModel(iterations=100, learning_rate=0.1, depth=8),
+        XGBoostModel(n_estimators=100, learning_rate=0.1, max_depth=6)
     ]
 
     # Initialize the evaluator

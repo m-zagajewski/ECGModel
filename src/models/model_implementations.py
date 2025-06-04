@@ -1,6 +1,8 @@
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
+from catboost import CatBoostClassifier
+import xgboost as xgb
 import numpy as np
 import pandas as pd
 from base_model import ECGBaseModel
@@ -97,3 +99,57 @@ class LogisticRegressionModel(ECGBaseModel):
     
     def _predict(self, X: np.ndarray):
         return self.model.predict(X) 
+
+class CatBoostModel(ECGBaseModel):
+    def __init__(self, iterations: int = 1000, learning_rate: float = 0.1,
+                 depth: int = 6, verbose: bool = False):
+        super().__init__()
+        self.iterations = iterations
+        self.learning_rate = learning_rate
+        self.depth = depth
+        self.verbose = verbose
+        self.model = None
+
+    def _fit_model(self, X: np.ndarray, y: pd.Series):
+        self.model = CatBoostClassifier(
+            iterations=self.iterations,
+            learning_rate=self.learning_rate,
+            depth=self.depth,
+            verbose=self.verbose,
+            random_seed=42
+        )
+        self.model.fit(X, y)
+
+    def _predict(self, X: np.ndarray):
+        return self.model.predict(X)
+    
+class XGBoostModel(ECGBaseModel):
+    def __init__(self, 
+                 n_estimators: int = 100,
+                 learning_rate: float = 0.1,
+                 max_depth: int = 3,
+                 subsample: float = 1.0,
+                 colsample_bytree: float = 1.0):
+        super().__init__()
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.subsample = subsample
+        self.colsample_bytree = colsample_bytree
+        self.model = None
+    
+    def _fit_model(self, X: np.ndarray, y: pd.Series):
+        self.model = xgb.XGBClassifier(
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            max_depth=self.max_depth,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
+            use_label_encoder=False,
+            eval_metric='logloss',
+            random_state=42
+        )
+        self.model.fit(X, y)
+    
+    def _predict(self, X: np.ndarray):
+        return self.model.predict(X)
