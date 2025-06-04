@@ -3,10 +3,8 @@ import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# Usuwam import seaborn, który powoduje błąd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
-# Poprawiony import dla permutation_importance z właściwego modułu
 from sklearn.inspection import permutation_importance
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
