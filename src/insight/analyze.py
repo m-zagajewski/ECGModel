@@ -17,6 +17,15 @@ import multiprocessing
 import warnings
 from functools import partial
 import time
+import platform  # Dodajemy import do wykrywania systemu operacyjnego
+
+# Wykrywanie systemu operacyjnego
+IS_MACOS = platform.system() == 'Darwin'
+
+# Konfiguracja matplotlib dla macOS - ustaw backend nieinteraktywny dla bezpiecznego wielowątkowego działania
+if IS_MACOS:
+    mpl.use('Agg')  # Używamy nieinteraktywnego backendu na macOS
+    print(f"Wykryto macOS. Używam nieinteraktywnego backendu matplotlib.")
 
 # Wyłącz zbędne ostrzeżenia
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -199,7 +208,11 @@ def plot_feature_importance(importances, feature_names, title, top_n=20, filenam
         os.makedirs(CONFIG['output_dir'], exist_ok=True)
         plt.savefig(os.path.join(CONFIG['output_dir'], filename), dpi=300, bbox_inches='tight')
     
-    plt.close()
+    # Na macOS nie wyświetlaj wykresów interaktywnie
+    if IS_MACOS:
+        plt.close()
+    else:
+        plt.close()  # Zamykamy wykres zamiast pokazywać - lepsze dla równoległego przetwarzania
 
 def _generate_feature_importance_worker(model_info, X, y, feature_names):
     """
@@ -322,8 +335,11 @@ def analyze_models_parallel(models_to_analyze, X, y, feature_names):
     # Utwórz częściową funkcję z stałymi argumentami
     worker_func = partial(_generate_feature_importance_worker, X=X, y=y, feature_names=feature_names)
 
+    # Na macOS używamy ThreadPoolExecutor zamiast ProcessPoolExecutor aby uniknąć problemów z GUI
+    executor_class = concurrent.futures.ThreadPoolExecutor if IS_MACOS else concurrent.futures.ProcessPoolExecutor
+    
     # Wykonaj równoległą analizę
-    with concurrent.futures.ProcessPoolExecutor(max_workers=n_jobs) as executor:
+    with executor_class(max_workers=n_jobs) as executor:
         futures = {executor.submit(worker_func, model_info): model_info for model_info in models_to_analyze}
 
         for i, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -367,8 +383,11 @@ def analyze_statistical_parallel(X, y, feature_names, top_n=20):
     if CONFIG['verbose']:
         print("\nRównolegle wykonuję analizę statystyczną...")
     
+    # Na macOS używamy ThreadPoolExecutor zamiast ProcessPoolExecutor
+    executor_class = concurrent.futures.ThreadPoolExecutor if IS_MACOS else concurrent.futures.ThreadPoolExecutor
+    
     # Używamy mapowania zamiast submit/result_completed dla prostszego kodu
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(tasks)) as executor:
+    with executor_class(max_workers=len(tasks)) as executor:
         for name, result in executor.map(statistical_worker_function, tasks):
             if result is not None:
                 results[name] = result
@@ -958,6 +977,7 @@ def main():
     os.makedirs(CONFIG['output_dir'], exist_ok=True)
     
     print("\n====== Analiza najważniejszych cech ======")
+    print(f"System operacyjny: {platform.system()}")
     print(f"Używam {CONFIG['n_jobs']} rdzeni CPU do analizy")
     print(f"Wyniki będą zapisane w {CONFIG['output_dir']}")
     
