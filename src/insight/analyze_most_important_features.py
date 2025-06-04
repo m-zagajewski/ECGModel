@@ -450,6 +450,9 @@ def main():
         (XGBoostModel, "XGBoost Feature Importance", "xgb_importance.png", 'bar'),
         (GradientBoostingModel, "Gradient Boosting Feature Importance", "gb_importance.png", 'bar'),
         (CatBoostModel, "CatBoost Feature Importance", "catboost_importance.png", 'bar'),
+        (SVMModel, "SVM (RBF) Feature Importance", "svm_rbf_importance.png", 'bar'),
+        (lambda: SVMModel(kernel='linear'), "SVM (Linear) Feature Importance", "svm_linear_importance.png", 'bar'),
+        (lambda: SVMModel(kernel='poly', degree=3), "SVM (Polynomial) Feature Importance", "svm_poly_importance.png", 'bar'),
         (LogisticRegressionModel, "Logistic Regression Coefficients", "lr_coefficients.png", 'bar')
     ]
 
@@ -457,11 +460,22 @@ def main():
     importance_results = {}
     
     # Analizuj każdy model
-    for model_class, title, filename, style in models_to_analyze:
+    for model_entry, title, filename, style in models_to_analyze:
         print(f"\nAnaliza ważności cech: {title}")
-        importance = analyze_with_model(model_class, X_scaled, y, feature_names, title, filename=filename)
+        # Utwórz instancję modelu (obsługa zarówno klas jak i funkcji lambda)
+        model_instance = model_entry() if callable(model_entry) and not isinstance(model_entry, type) else model_entry
+        
+        # Określ nazwę modelu dla wyników
+        model_name = model_instance.__class__.__name__
+        if title.startswith("SVM"):
+            # Dodaj informację o kernelu do nazwy modelu dla SVM
+            kernel_type = title.split("(")[1].split(")")[0]
+            model_name = f"{model_name}_{kernel_type}"
+        
+        # Wykonaj analizę
+        importance = analyze_with_model(model_instance, X_scaled, y, feature_names, title, filename=filename)
         if importance is not None:
-            importance_results[model_class.__name__] = importance
+            importance_results[model_name] = importance
 
     # 4. Analiza statystyczna
     print("\n=== Statystyczna analiza cech ===")
