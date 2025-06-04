@@ -42,6 +42,8 @@ def cleaned_up(df: pd.DataFrame) -> pd.DataFrame:
     # Remove columns that are not numeric
     numeric_cols = df_cleaned.select_dtypes(include=[np.number]).columns
     df_cleaned = df_cleaned[numeric_cols]
+    #remove from index _
+    df_cleaned.index = df_cleaned.index.str.replace('_', '', regex=False)
     return df_cleaned
 
 # Helper functions for safe mathematical operations

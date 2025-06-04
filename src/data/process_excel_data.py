@@ -102,6 +102,8 @@ def process_excel_data(file_path="../../data/clinical_data.xlsx", debug=False) -
     # Check if 'KG' column exists and filter it
     df.index = df_raw['KG']  # Medical record number as index
     df = df.rename_axis("id")
+    #remove backslashes from index
+    df.index = df.index.str.replace('/', '', regex=False)  # Normalize index to avoid issues with slashes
 
     # Check if 'PLEC' column exists and filter it
     df = df.drop('PLEC', axis=1)  # Drop gender column (duplicate with 'male sex')
