@@ -4,8 +4,8 @@ from skopt import BayesSearchCV
 from skopt.space import Real, Integer, Categorical
 import os
 from typing import Dict, Any, Type
-from base_model import ECGBaseModel
-from model_implementations import (
+from src.models.base_model import ECGBaseModel
+from src.models.model_implementations import (
     RandomForestModel,
     GradientBoostingModel,
     SVMModel,
@@ -194,4 +194,4 @@ def main():
     print(f"Best model saved to: {model_path}")
 
 if __name__ == "__main__":
-    main() 
+    main()

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict, Any
 from sklearn.model_selection import train_test_split
-from base_model import ECGBaseModel
+from src.models.base_model import ECGBaseModel
 
 class ModelEvaluator:
     def __init__(self, test_size: float = 0.2, random_state: int = 42):
@@ -72,4 +72,4 @@ class ModelEvaluator:
         elif scoring == 'roc_auc':
             return roc_auc_score(y_true, y_pred)
         else:
-            raise ValueError(f"Scoring metric {scoring} not implemented") 
+            raise ValueError(f"Scoring metric {scoring} not implemented")

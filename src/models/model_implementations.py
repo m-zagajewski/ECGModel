@@ -5,7 +5,7 @@ from catboost import CatBoostClassifier
 import xgboost as xgb
 import numpy as np
 import pandas as pd
-from base_model import ECGBaseModel
+from src.models.base_model import ECGBaseModel
 
 class RandomForestModel(ECGBaseModel):
     def __init__(self, n_estimators: int = 100, max_depth: int = None, 

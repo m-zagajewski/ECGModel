@@ -1,5 +1,5 @@
 import pandas as pd
-from model_implementations import (
+from src.models.model_implementations import (
     RandomForestModel,
     GradientBoostingModel,
     SVMModel,
@@ -7,7 +7,7 @@ from model_implementations import (
     CatBoostModel,
     XGBoostModel
 )
-from model_evaluation import ModelEvaluator
+from src.models.model_evaluation import ModelEvaluator
 
 def main():
     # Load the preprocessed data
@@ -53,4 +53,4 @@ def main():
     results.to_csv(output_path, index=False)
 
 if __name__ == "__main__":
-    main() 
+    main()
