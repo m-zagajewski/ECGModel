@@ -8,6 +8,8 @@ neurokit2>=0.2.11 # For processing ecg
 PyWavelets>= 1.7.0   # For wavelet transforms
 tqdm~=4.67.1
 multiprocessing-logging>=0.3.1  # For proper logging with multiprocessing
+scikit-learn # for machine learning models
+scikit-optimize
 
 # Deep learning
 torch>=1.9.0
@@ -16,3 +18,7 @@ torchvision>=0.10.0
 # Data processing
 openpyxl>=3.0.0  # For Excel file support
 scipy~=1.15.3
+
+# Added from the code block
+scikit-optimize
+joblib

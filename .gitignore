@@ -5,3 +5,5 @@ __pycache__
 /data/
 .DS_Store
 workspace.xml
+model_optimization_results/
+model_comparison_results.csv
