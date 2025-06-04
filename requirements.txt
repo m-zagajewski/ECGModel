@@ -25,3 +25,5 @@ tqdm~=4.67.1
 scikit-optimize
 joblib
 
+#data analysis
+shap
