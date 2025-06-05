@@ -24,6 +24,13 @@ class ECGBaseModel(ABC, BaseEstimator):
         X_scaled = self.scaler.transform(X)
         return self._predict(X_scaled)
     
+    def predict_proba(self, X: pd.DataFrame):
+        """Make probability predictions on new data."""
+        if not hasattr(self.model, 'predict_proba'):
+            raise AttributeError(f"Model {self.model.__class__.__name__} does not support predict_proba.")
+        X_scaled = self.scaler.transform(X)
+        return self._predict_proba(X_scaled)
+
     def evaluate(self, X: pd.DataFrame, y: pd.Series, cv: int = 5, scoring: str = 'accuracy') -> Dict[str, Any]:
         pipeline = make_pipeline(self.scaler, self.model)
         scores = cross_val_score(pipeline, X, y, cv=cv, scoring=scoring)
@@ -46,3 +53,8 @@ class ECGBaseModel(ABC, BaseEstimator):
     def _predict(self, X: np.ndarray):
         """Implementation specific prediction."""
         pass 
+
+    @abstractmethod
+    def _predict_proba(self, X: np.ndarray):
+        """Implementation specific probability prediction."""
+        pass

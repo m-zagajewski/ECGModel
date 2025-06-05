@@ -124,7 +124,7 @@ class ModelOptimizer:
 def main():
     # Load the data
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_path = os.path.join(project_root, 'data/processed_features.csv')
+    data_path = os.path.join(project_root, 'data/selected_features.csv')
     data = pd.read_csv(data_path)
 
     # Prepare the data

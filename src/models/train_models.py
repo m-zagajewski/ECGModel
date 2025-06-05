@@ -13,7 +13,7 @@ def main():
     # Load the preprocessed data
     import os
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_path = os.path.join(project_root, 'data/processed_features.csv')
+    data_path = os.path.join(project_root, 'data/selected_features.csv')
     data = pd.read_csv(data_path)
 
     # Assuming the last column is the target variable
