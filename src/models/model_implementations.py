@@ -172,7 +172,7 @@ class XGBoostModel(ECGBaseModel):
             max_depth=self.max_depth,
             subsample=self.subsample,
             colsample_bytree=self.colsample_bytree,
-            use_label_encoder=False,
+           # use_label_encoder=False,
             eval_metric='logloss',
             random_state=self.random_state # Przekazanie random_state
         )
