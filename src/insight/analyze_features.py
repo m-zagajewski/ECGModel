@@ -58,7 +58,7 @@ CONFIG = {
     'n_jobs': max(1, multiprocessing.cpu_count() - 1),  # Domyślnie używa wszystkich dostępnych rdzeni - 1
     'random_state': 42,
     'permutation_repeats': 10,
-    'top_n_features': 20,  # Ile najważniejszych cech pokazywać na wykresach
+    'top_n_features': 50,  # Ile najważniejszych cech pokazywać na wykresach
     'output_dir': os.path.join(project_root, 'data/feature_analysis'),
     'verbose': True
 }
@@ -83,7 +83,9 @@ def statistical_worker_function(task):
         selector = SelectKBest(method, k='all')
         selector.fit(X, y)
         scores = selector.scores_
-        plot_feature_importance(scores, feature_names, title, CONFIG['top_n_features'], filename)
+        # Tworzenie podfolderu dla analiz statystycznych
+        output_subdir = os.path.join(CONFIG['output_dir'], "StatisticalAnalysis")
+        plot_feature_importance(scores, feature_names, title, CONFIG['top_n_features'], filename, subfolder="StatisticalAnalysis")
         return name, pd.Series(scores, index=feature_names).sort_values(ascending=False)
     except Exception as e:
         print(f"Błąd w analizie {name}: {str(e)}")
@@ -159,7 +161,7 @@ def create_colormap(n_colors):
     """Twórz przyjemną dla oka kolorową paletę dla wizualizacji"""
     return plt.cm.viridis(np.linspace(0, 0.85, n_colors))
 
-def plot_feature_importance(importances, feature_names, title, top_n=20, filename=None, style='bar'):
+def plot_feature_importance(importances, feature_names, title, top_n=20, filename=None, style='bar', subfolder=None):
     """Twórz atrakcyjne wykresy ważności cech z wieloma stylami wizualizacji"""
     # Sortuj według ważności
     idx = np.argsort(importances)[::-1][:top_n]
@@ -205,8 +207,12 @@ def plot_feature_importance(importances, feature_names, title, top_n=20, filenam
     
     # Zapisz wykres
     if filename:
-        os.makedirs(CONFIG['output_dir'], exist_ok=True)
-        plt.savefig(os.path.join(CONFIG['output_dir'], filename), dpi=300, bbox_inches='tight')
+        current_output_dir = CONFIG['output_dir']
+        if subfolder:
+            current_output_dir = os.path.join(CONFIG['output_dir'], subfolder)
+        
+        os.makedirs(current_output_dir, exist_ok=True)
+        plt.savefig(os.path.join(current_output_dir, filename), dpi=300, bbox_inches='tight')
     
     # Na macOS nie wyświetlaj wykresów interaktywnie
     if IS_MACOS:
@@ -218,6 +224,8 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
     """
     Funkcja robocza do analizy ważności cech dla jednego modelu - optymalizowana do uruchomienia równoległego
     """
+    model = None # Inicjalizacja na wypadek błędu przed przypisaniem
+    model_name_for_path = "UnknownModel" # Domyślna nazwa folderu
     try:
         if isinstance(model_info, tuple):
             # Pobierz informacje o modelu z krotki
@@ -231,6 +239,7 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
                 else:
                     # Jeśli to klasa, utwórz jej instancję
                     model = model_class()
+                model_name_for_path = model.__class__.__name__
             else:
                 raise ValueError(f"Nieprawidłowy format danych modelu: {model_info}")
         else:
@@ -239,6 +248,7 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
             title = model.__class__.__name__ + " Feature Importance"
             filename = model.__class__.__name__.lower() + "_importance.png"
             style = 'bar'
+            model_name_for_path = model.__class__.__name__
         
         model_name = model.__class__.__name__
         
@@ -274,7 +284,8 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         # Visualize the importances 
         plot_feature_importance(
             importances, feature_names, title, 
-            top_n=CONFIG['top_n_features'], filename=filename, style=style
+            top_n=CONFIG['top_n_features'], filename=filename, style=style,
+            subfolder=model_name_for_path # Przekazanie nazwy modelu jako subfolderu
         )
         
         # Generate SHAP plots if appropriate
@@ -289,7 +300,11 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
                                  plot_type="bar", show=False)
                 plt.title(f"SHAP Values - {model_name}", fontsize=14, fontweight='bold')
                 plt.tight_layout()
-                plt.savefig(os.path.join(CONFIG['output_dir'], f"shap_{model_name}.png"),
+                
+                # Zapis SHAP do podfolderu modelu
+                shap_output_dir = os.path.join(CONFIG['output_dir'], model_name_for_path)
+                os.makedirs(shap_output_dir, exist_ok=True)
+                plt.savefig(os.path.join(shap_output_dir, f"shap_{model_name}.png"),
                            dpi=300, bbox_inches='tight')
                 plt.close()
             except Exception as e:
@@ -313,9 +328,10 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         return results
 
     except Exception as e:
-        print(f"ERROR w {getattr(model_info, '__name__', str(model_info))}: {str(e)}")
+        model_name_for_error = model_name_for_path if model else getattr(model_info, '__name__', str(model_info))
+        print(f"ERROR w {model_name_for_error}: {str(e)}")
         return {
-            'model_name': getattr(model_info, '__name__', str(model_info)),
+            'model_name': model_name_for_error,
             'error': str(e),
         }
 
@@ -366,6 +382,7 @@ def analyze_models_parallel(models_to_analyze, X, y, feature_names):
 def analyze_statistical_parallel(X, y, feature_names, top_n=20):
     """Równoległa analiza statystyczna ważności cech"""
     results = {}
+    output_subdir_name = "StatisticalAnalysis" # Nazwa podfolderu dla analiz statystycznych
 
     # Różne metody statystyczne do analizy w równoległych procesach
     methods = [
@@ -381,7 +398,7 @@ def analyze_statistical_parallel(X, y, feature_names, top_n=20):
     
     # Wykonaj zadania równolegle
     if CONFIG['verbose']:
-        print("\nRównolegle wykonuję analizę statystyczną...")
+        print(f"\nRównolegle wykonuję analizę statystyczną (wyniki w: {output_subdir_name})...")
     
     # Na macOS używamy ThreadPoolExecutor zamiast ProcessPoolExecutor
     executor_class = concurrent.futures.ThreadPoolExecutor if IS_MACOS else concurrent.futures.ThreadPoolExecutor
@@ -400,11 +417,14 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
     df = pd.DataFrame(X, columns=feature_names)
     df['TARGET'] = y
     
+    correlation_output_dir = os.path.join(CONFIG['output_dir'], "CorrelationAnalysis")
+    os.makedirs(correlation_output_dir, exist_ok=True)
+    
     # Korelacja z wynikiem
     corr_with_target = df.corr()['TARGET'].sort_values(ascending=False).drop('TARGET')
     
     # Zapisz korelację z wynikiem
-    corr_with_target.to_csv(os.path.join(CONFIG['output_dir'], 'correlation_with_target.csv'))
+    corr_with_target.to_csv(os.path.join(correlation_output_dir, 'correlation_with_target.csv'))
     
     # Top cechy korelowane z wynikiem (pozytywnie i negatywnie)
     plt.figure(figsize=(14, 12))
@@ -430,7 +450,7 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
                 color='black' if xval >= 0 else 'white')
     
     plt.tight_layout()
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'top_corr_with_target.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(correlation_output_dir, 'top_corr_with_target.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Mapa korelacji dla top cech
@@ -467,7 +487,7 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
     
     plt.title('Mapa korelacji dla najważniejszych cech', fontsize=14, fontweight='bold')
     plt.tight_layout()
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'correlation_heatmap.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(correlation_output_dir, 'correlation_heatmap.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Wykryj wysoko skorelowane cechy (potencjalna wielowspółliniowość)
@@ -483,7 +503,7 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
     if high_corr_pairs:
         high_corr_df = pd.DataFrame(high_corr_pairs, columns=['Feature 1', 'Feature 2', 'Correlation'])
         high_corr_df = high_corr_df.sort_values('Correlation', ascending=False)
-        high_corr_df.to_csv(os.path.join(CONFIG['output_dir'], 'high_correlation_pairs.csv'), index=False)
+        high_corr_df.to_csv(os.path.join(correlation_output_dir, 'high_correlation_pairs.csv'), index=False)
         print(f"Znaleziono {len(high_corr_df)} par wysoko skorelowanych cech (>= {corr_threshold})")
         print(high_corr_df.head(10))
     else:
@@ -518,7 +538,7 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
     corr_stability['cv'] = corr_stability['std_corr'] / corr_stability['mean_corr'].abs()
     
     # Zapisujemy wyniki
-    corr_stability.to_csv(os.path.join(CONFIG['output_dir'], 'correlation_stability.csv'))
+    corr_stability.to_csv(os.path.join(correlation_output_dir, 'correlation_stability.csv'))
     
     # Wizualizujemy stabilność dla top 15 cech
     top_stability = corr_stability.head(15)
@@ -547,7 +567,7 @@ def analyze_correlation(X, y, feature_names, corr_threshold=0.7):
     plt.xlabel('Współczynnik korelacji z celem (+/- odch. std.)')
     plt.grid(axis='x', linestyle='--', alpha=0.5)
     plt.tight_layout()
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'correlation_stability.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(correlation_output_dir, 'correlation_stability.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     return corr_with_target, corr_stability
@@ -556,6 +576,9 @@ def perform_pca_analysis(X, feature_names, n_components=10):
     """Przeprowadź zaawansowaną analizę PCA z wizualizacją wkładu cech"""
     print("\nPrzeprowadzam analizę PCA...")
     
+    pca_output_dir = os.path.join(CONFIG['output_dir'], "PCA_Analysis")
+    os.makedirs(pca_output_dir, exist_ok=True)
+
     # Standaryzacja danych
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -611,7 +634,7 @@ def perform_pca_analysis(X, feature_names, n_components=10):
     plt.tight_layout()
     
     # Zapisz wykres
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'pca_explained_variance.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(pca_output_dir, 'pca_explained_variance.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Analiza i wizualizacja dla każdego z najważniejszych komponentów
@@ -640,11 +663,11 @@ def perform_pca_analysis(X, feature_names, n_components=10):
         plt.grid(axis='x', linestyle='--', alpha=0.5)
         plt.xlabel('Wartość współczynnika (kierunek ma znaczenie)', fontsize=12)
         plt.tight_layout()
-        plt.savefig(os.path.join(CONFIG['output_dir'], f'pca_component_{i+1}.png'), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(pca_output_dir, f'pca_component_{i+1}.png'), dpi=300, bbox_inches='tight')
         plt.close()
     
     # Zapisz współczynniki komponentów
-    component_df.to_csv(os.path.join(CONFIG['output_dir'], 'pca_components.csv'))
+    component_df.to_csv(os.path.join(pca_output_dir, 'pca_components.csv'))
     
     # Biplot dla pierwszych dwóch komponentów
     if X_pca.shape[1] >= 2:
@@ -695,7 +718,7 @@ def perform_pca_analysis(X, feature_names, n_components=10):
         plt.axvline(x=0, color='gray', linestyle='--', alpha=0.3)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(os.path.join(CONFIG['output_dir'], 'pca_biplot.png'), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(pca_output_dir, 'pca_biplot.png'), dpi=300, bbox_inches='tight')
         plt.close()
     
     return pca, component_df
@@ -705,6 +728,9 @@ def analyze_feature_clusters(feature_importances, feature_names, n_clusters=5):
     if len(feature_importances) == 0:
         print("Brak danych o ważności cech do klastrowania")
         return
+        
+    clusters_output_dir = os.path.join(CONFIG['output_dir'], "FeatureClusters")
+    os.makedirs(clusters_output_dir, exist_ok=True)
     
     # Przygotuj dane
     X_imp = feature_importances.values.reshape(-1, 1)
@@ -754,7 +780,7 @@ def analyze_feature_clusters(feature_importances, feature_names, n_clusters=5):
     plt.tight_layout()
     
     # Zapisz wykres
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'feature_importance_clusters.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(clusters_output_dir, 'feature_importance_clusters.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Drugi wykres: Srednia ważność klastrów z rozrzutem
@@ -793,11 +819,11 @@ def analyze_feature_clusters(feature_importances, feature_names, n_clusters=5):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'feature_importance_cluster_stats.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(clusters_output_dir, 'feature_importance_cluster_stats.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     # Zapisz wyniki klastrowania
-    cluster_df.to_csv(os.path.join(CONFIG['output_dir'], 'feature_importance_clusters.csv'), index=False)
+    cluster_df.to_csv(os.path.join(clusters_output_dir, 'feature_importance_clusters.csv'), index=False)
     
     # Podsumowanie klastrów
     print("\nPodsumowanie klastrów cech:")
@@ -868,6 +894,9 @@ def analyze_feature_interactions(X, y, feature_names, top_importance_features):
     """Zaawansowana analiza interakcji cech"""
     print("\nAnalizuję interakcje między najważniejszymi cechami...")
     
+    interactions_output_dir = os.path.join(CONFIG['output_dir'], "FeatureInteractions")
+    os.makedirs(interactions_output_dir, exist_ok=True)
+
     # Wybierz top 15 najważniejszych cech do analizy interakcji
     top_k = min(15, len(top_importance_features))
     top_features = list(top_importance_features.head(top_k).index)
@@ -925,7 +954,7 @@ def analyze_feature_interactions(X, y, feature_names, top_importance_features):
     interactions_df = interactions_df.sort_values('interaction_strength', ascending=False)
     
     # Zapisz wyniki
-    interactions_df.to_csv(os.path.join(CONFIG['output_dir'], 'feature_interactions.csv'), index=False)
+    interactions_df.to_csv(os.path.join(interactions_output_dir, 'feature_interactions.csv'), index=False)
     
     # Wizualizuj najsilniejsze interakcje
     top_interactions = interactions_df.head(10)
@@ -957,7 +986,7 @@ def analyze_feature_interactions(X, y, feature_names, top_importance_features):
     plt.title('Top 10 najsilniejszych interakcji między cechami', fontsize=14, fontweight='bold')
     plt.grid(axis='x', linestyle='--', alpha=0.5)
     plt.tight_layout()
-    plt.savefig(os.path.join(CONFIG['output_dir'], 'top_feature_interactions.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(interactions_output_dir, 'top_feature_interactions.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     print(f"Zidentyfikowano {len(interactions_df)} interakcji między cechami.")
