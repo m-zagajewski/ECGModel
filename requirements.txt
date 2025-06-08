@@ -1,29 +1,23 @@
 # Core dependencies
-numpy~=2.2.6
-pandas~=2.2.3
-matplotlib~=3.10.3
-seaborn>=0.11.0
-scikit-learn~=1.6.1
+numpy~=2.2.6 # For numerical computations
+pandas~=2.2.3 # For data manipulation and analysis
+matplotlib~=3.10.3 # For plotting and visualization
+seaborn>=0.11.0 # For statistical data visualization
+scikit-learn~=1.6.1 # For machine learning algorithms
 multiprocessing-logging>=0.3.1  # For proper logging with multiprocessing
-scikit-learn # for machine learning models
-scikit-optimize
+joblib # For parallel processing and caching
+scikit-optimize # For hyperparameter optimization
 
-# Deep learning
-torch>=1.9.0
-torchvision>=0.10.0
+# Machine learning and deep learning
 catboost  # For gradient boosting models
 xgboost # For gradient boosting models
 
 # Data processing
 openpyxl>=3.0.0  # For Excel file support
-scipy~=1.15.3
+scipy~=1.15.3 # For scientific computing
 neurokit2>=0.2.11 # For processing ecg
 PyWavelets>= 1.7.0   # For wavelet transforms
-tqdm~=4.67.1
-
-# Added from the code block
-scikit-optimize
-joblib
+tqdm~=4.67.1 # For progress bars
 
 #data analysis
-shap
+shap # For model interpretability
