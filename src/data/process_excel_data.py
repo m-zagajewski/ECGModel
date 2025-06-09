@@ -37,7 +37,6 @@ def process_excel_data(file_path="../../data/clinical_data.xlsx", debug=False) -
         "MAP 1sza doba",
         "pao2/fio2 1sza doba",
         "BILI TISS 1",
-        "Wentylacja mechaniczna TAK=1, NIE =0 (TISS nr 1)",
         "dopamina przyjęcie tak=1, nie = 0 (TISS nr 1)",
         "dopamina  dawka (TISS nr 1)",
         "noradrenalina przyjęcie: tak=1, nie =0 (TISS nr 1)",
