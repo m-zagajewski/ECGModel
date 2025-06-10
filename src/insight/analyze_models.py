@@ -11,6 +11,7 @@ from sklearn.metrics import (
     precision_score, recall_score
 )
 import itertools
+from tqdm.auto import tqdm # Dodano import tqdm
 
 # Dodaj ścieżkę projektu do sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -30,11 +31,60 @@ from src.models.base_model import ECGBaseModel
 # Globalna konfiguracja
 CONFIG = {
     'output_dir': os.path.join(project_root, 'data/model_analysis'),
-    'random_state': 42,
+    'random_state': 34,
     'test_size': 0.2,
     'cv_folds': 5,
     'verbose': True
 }
+
+# Mapowanie nazw modeli na klasy modeli
+MODEL_CLASSES = {
+    'random_forest': RandomForestModel,
+    'gradient_boosting': GradientBoostingModel,
+    'svm': SVMModel,
+    'logistic_regression': LogisticRegressionModel,
+    'catboost': CatBoostModel,
+    'xgboost': XGBoostModel
+}
+
+def load_model_params(model_name):
+    """
+    Wczytaj zoptymalizowane parametry dla modelu z pliku JSON
+    lub zwróć domyślne parametry, jeśli plik nie istnieje.
+    """
+    # Ścieżka do pliku z parametrami
+    params_file = os.path.join(project_root, f'model_optimization_results/{model_name}_best_params.json')
+    default_params = {
+        'random_forest': {'n_estimators': 100, 'max_depth': 10, 'random_state': CONFIG['random_state']},
+        'gradient_boosting': {'n_estimators': 200, 'learning_rate': 0.05, 'random_state': CONFIG['random_state']},
+        'svm': {'kernel': 'rbf', 'C': 0.60, 'gamma': 'scale', 'probability': True, 'random_state': CONFIG['random_state']},
+        'logistic_regression': {'C': 1.0, 'penalty': 'l2', 'random_state': CONFIG['random_state'], 'max_iter': 1000},
+        'catboost': {'iterations': 1000, 'learning_rate': 0.1, 'depth': 6, 'random_seed': CONFIG['random_state'], 'verbose': 0},
+        'xgboost': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 3, 'random_state': CONFIG['random_state']}
+    }
+    
+    try:
+        if os.path.exists(params_file):
+            with open(params_file, 'r') as f:
+                params = json.load(f)
+            if CONFIG['verbose']:
+                print(f"Wczytano zoptymalizowane parametry dla {model_name}")
+            
+            # Upewnij się, że parametry zawierają random_state/random_seed dla reprodukowalności
+            if 'random_state' not in params and model_name != 'catboost':
+                params['random_state'] = CONFIG['random_state']
+            elif model_name == 'catboost' and 'random_seed' not in params:
+                params['random_seed'] = CONFIG['random_state']
+                
+            return params
+        else:
+            if CONFIG['verbose']:
+                print(f"Plik zoptymalizowanych parametrów {params_file} nie znaleziony dla {model_name}. Używam domyślnych parametrów.")
+            return default_params.get(model_name, {'random_state': CONFIG['random_state']})
+    except Exception as e:
+        if CONFIG['verbose']:
+            print(f"Błąd wczytywania parametrów dla {model_name}: {e}. Używam domyślnych parametrów.")
+        return default_params.get(model_name, {'random_state': CONFIG['random_state']})
 
 def load_selected_data():
     """Wczytaj dane z pliku selected_features.csv."""
@@ -284,19 +334,35 @@ def main():
     
     if CONFIG['verbose']:
         print(f"Dane podzielone na zbiory treningowe ({X_train.shape[0]} próbek) i testowe ({X_test.shape[0]} próbek).")
+        print(f"Proporcja zbioru testowego: {CONFIG['test_size']:.2f} ({X_test.shape[0]} próbek) względem całości ({X.shape[0]} próbek).")
 
-    models_to_analyze = [
-        (RandomForestModel(random_state=CONFIG['random_state']), "RandomForest"),
-        (GradientBoostingModel(random_state=CONFIG['random_state']), "GradientBoosting"),
-        (SVMModel(random_state=CONFIG['random_state'], probability=True), "SVM_RBF"), # probability=True dla ROC/PR
-        (LogisticRegressionModel(random_state=CONFIG['random_state']), "LogisticRegression"), # usunięto max_iter=1000
-        (CatBoostModel(random_seed=CONFIG['random_state'], verbose=0), "CatBoost"), # verbose=0 by uniknąć logów
-        (XGBoostModel(random_state=CONFIG['random_state']), "XGBoost") # usunięto parametry niezdefiniowane w konstruktorze
-    ]
+    # Lista modeli do analizy (z parametrami z optimize_model lub domyślnymi)
+    models_to_analyze = []
+    
+    # Wczytaj parametry i utwórz instancje dla każdego typu modelu
+    for model_short_name, display_name in [
+        ('random_forest', "RandomForest"),
+        ('gradient_boosting', "GradientBoosting"),
+        ('svm', "SVM_RBF"),
+        ('logistic_regression', "LogisticRegression"),
+        ('catboost', "CatBoost"),
+        ('xgboost', "XGBoost")
+    ]:
+        try:
+            params = load_model_params(model_short_name)
+            model_class = MODEL_CLASSES[model_short_name]
+            model_instance = model_class(**params)
+            models_to_analyze.append((model_instance, display_name))
+            if CONFIG['verbose']:
+                print(f"Dodano model {display_name} z parametrami: {params}")
+        except Exception as e:
+            print(f"BŁĄD podczas inicjalizacji modelu {display_name}: {e}")
+            import traceback
+            traceback.print_exc()
     
     all_model_metrics = {}
 
-    for model_instance, model_name in models_to_analyze:
+    for model_instance, model_name in tqdm(models_to_analyze, desc="Analiza modeli"):
         try:
             metrics = analyze_single_model(model_instance, X_train, y_train, X_test, y_test,
                                  model_name, CONFIG['output_dir'])

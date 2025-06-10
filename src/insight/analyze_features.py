@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import json
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 from sklearn.inspection import permutation_importance
@@ -56,22 +57,104 @@ from src.models.model_implementations import (
 # Globalna konfiguracja
 CONFIG = {
     'n_jobs': max(1, multiprocessing.cpu_count() - 1),  # Domyślnie używa wszystkich dostępnych rdzeni - 1
-    'random_state': 42,
+    'random_state': 34,
     'permutation_repeats': 10,
     'top_n_features': 50,  # Ile najważniejszych cech pokazywać na wykresach
     'output_dir': os.path.join(project_root, 'data/feature_analysis'),
     'verbose': True
 }
 
-# Funkcje pomocnicze dla serializacji w przetwarzaniu równoległym
-def create_linear_svm():
-    """Tworzy instancję modelu SVM z kernelem liniowym."""
-    return SVMModel(kernel='linear')
+# Mapowanie nazw modeli na klasy modeli dla spójności
+MODEL_CLASSES = {
+    'random_forest': RandomForestModel,
+    'gradient_boosting': GradientBoostingModel,
+    'svm': SVMModel,
+    'logistic_regression': LogisticRegressionModel, 
+    'catboost': CatBoostModel,
+    'xgboost': XGBoostModel
+}
 
-def create_poly_svm():
-    """Tworzy instancję modelu SVM z kernelem wielomianowym."""
-    # Usunięto parametr degree, który nie jest obsługiwany przez SVMModel
-    return SVMModel(kernel='poly')
+def load_model_params(model_name, analysis_name):
+    """
+    Wczytaj zoptymalizowane parametry dla modelu z pliku JSON
+    lub zwróć domyślne parametry do analizy, jeśli plik nie istnieje.
+    """
+    # Ścieżka do pliku z parametrami
+    params_file = os.path.join(project_root, f'model_optimization_results/{model_name}_best_params.json')
+    
+    # Domyślne parametry dla modeli używanych w analizie cech - prostsze niż dla treningu
+    analysis_default_params = {
+        'random_forest': {'random_state': CONFIG['random_state']},
+        'gradient_boosting': {'random_state': CONFIG['random_state']},
+        'svm': {'random_state': CONFIG['random_state'], 'probability': True},
+        'logistic_regression': {'random_state': CONFIG['random_state'], 'max_iter': 1000},
+        'catboost': {'random_seed': CONFIG['random_state'], 'verbose': 0},
+        'xgboost': {'random_state': CONFIG['random_state']}
+    }
+    
+    try:
+        if os.path.exists(params_file):
+            with open(params_file, 'r') as f:
+                params = json.load(f)
+            
+            # Upewnij się, że parametry zawierają random_state/random_seed dla reprodukowalności
+            if 'random_state' not in params and model_name != 'catboost':
+                params['random_state'] = CONFIG['random_state']
+            elif model_name == 'catboost' and 'random_seed' not in params:
+                params['random_seed'] = CONFIG['random_state']
+            
+            if model_name == 'catboost':  # Zawsze ustaw verbose=0 dla CatBoost w analizie
+                params['verbose'] = 0
+                
+            print(f"Wczytano zoptymalizowane parametry dla {analysis_name} ({model_name}): {params}")
+            return params
+        else:
+            print(f"Plik zoptymalizowanych parametrów {params_file} nie znaleziony dla {analysis_name} ({model_name}). Przechodzę do domyślnych/fabryki.")
+            return analysis_default_params.get(model_name, {'random_state': CONFIG['random_state']})
+    except Exception as e:
+        print(f"Błąd ładowania/użycia zopt. parametrów dla {analysis_name} ({model_name}): {e}. Przechodzę do domyślnych/fabryki.")
+        return analysis_default_params.get(model_name, {'random_state': CONFIG['random_state']})
+
+# Funkcje pomocnicze dla serializacji w przetwarzaniu równoległym
+def create_model_instance(model_name, model_class, analysis_name):
+    """Tworzy instancję modelu z odpowiednimi parametrami."""
+    try:
+        params = load_model_params(model_name, analysis_name)
+        instance = model_class(**params)
+        print(f"Użyto domyślnych parametrów analizy dla {analysis_name} ({model_class.__name__}): {params}")
+        return instance
+    except Exception as e:
+        print(f"Błąd tworzenia instancji dla {analysis_name} ({model_class.__name__}): {e}")
+        print(f"Użyto fabryki do stworzenia instancji dla {analysis_name} ({model_class.__name__})")
+        return model_class()
+
+def create_random_forest_for_analysis():
+    """Tworzy instancję RandomForest do analizy cech."""
+    return create_model_instance('random_forest', RandomForestModel, "Random Forest Feature Importance")
+
+def create_xgboost_for_analysis():
+    """Tworzy instancję XGBoost do analizy cech."""
+    return create_model_instance('xgboost', XGBoostModel, "XGBoost Feature Importance")
+
+def create_gradient_boosting_for_analysis():
+    """Tworzy instancję Gradient Boosting do analizy cech."""
+    return create_model_instance('gradient_boosting', GradientBoostingModel, "Gradient Boosting Feature Importance")
+
+def create_catboost_for_analysis():
+    """Tworzy instancję CatBoost do analizy cech."""
+    return create_model_instance('catboost', CatBoostModel, "CatBoost Feature Importance")
+
+def create_svm_for_analysis():
+    """Tworzy instancję SVM (RBF) do analizy cech."""
+    return create_model_instance('svm', SVMModel, "SVM (Optimized Kernel) Feature Importance")
+
+def create_linear_svm():
+    """Tworzy instancję SVM z kernelem liniowym."""
+    return SVMModel(kernel='linear', random_state=CONFIG['random_state'], probability=True)
+
+def create_logistic_regression_for_analysis():
+    """Tworzy instancję Logistic Regression do analizy cech."""
+    return create_model_instance('logistic_regression', LogisticRegressionModel, "Logistic Regression Coefficients")
 
 def statistical_worker_function(task):
     """
@@ -252,8 +335,9 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         
         model_name = model.__class__.__name__
         
-        # Trenowanie modelu - poprawione wywołanie
-        model._fit_model(X, y)
+        # Trenowanie modelu - ulepszony preprocessing
+        X_scaled = StandardScaler().fit_transform(X)
+        model._fit_model(X_scaled, y)
         
         # Determine approach for getting feature importances
         if hasattr(model.model, "feature_importances_"):
@@ -273,10 +357,10 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
             importance_method = "get_feature_importance"
             
         else:
-            # Permutation importance for other models
+            # Permutation importance for other models - dodaj scoring
             perm_imp = permutation_importance(
-                model.model, X, y, n_repeats=CONFIG['permutation_repeats'], 
-                random_state=CONFIG['random_state'], n_jobs=1
+                model.model, X_scaled, y, n_repeats=CONFIG['permutation_repeats'], 
+                random_state=CONFIG['random_state'], n_jobs=1, scoring='f1'
             )
             importances = perm_imp.importances_mean
             importance_method = "permutation"
@@ -292,11 +376,14 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         shap_values = None
         if SHAP_AVAILABLE:
             try:
-                explainer = shap.Explainer(model.model, X)
-                shap_values = explainer(X)
+                # Użyj już przeskalowanych danych dla SHAP (zamiast oryginalnych X)
+                background_data = shap.sample(pd.DataFrame(X_scaled, columns=feature_names), 100)
+                explainer = shap.KernelExplainer(model.predict_proba, background_data)
+                shap_values = explainer.shap_values(background_data)
 
                 plt.figure(figsize=(14, 10))
-                shap.summary_plot(shap_values, X, feature_names=feature_names,
+                shap.summary_plot(shap_values[1], background_data,
+                                 feature_names=feature_names,
                                  plot_type="bar", show=False)
                 plt.title(f"SHAP Values - {model_name}", fontsize=14, fontweight='bold')
                 plt.tight_layout()
@@ -319,8 +406,14 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         }
 
         if shap_values is not None:
+            # Dla modeli binarnych, shap_values[1] to wartości dla klasy pozytywnej
+            if isinstance(shap_values, list) and len(shap_values) > 1:
+                pos_class_shap = shap_values[1]
+            else:
+                pos_class_shap = shap_values
+                
             shap_importance = pd.Series(
-                np.abs(shap_values.values).mean(0),
+                np.abs(pos_class_shap).mean(0),
                 index=feature_names
             ).sort_values(ascending=False)
             results['shap_values'] = shap_importance
@@ -328,6 +421,8 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         return results
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         model_name_for_error = model_name_for_path if model else getattr(model_info, '__name__', str(model_info))
         print(f"ERROR w {model_name_for_error}: {str(e)}")
         return {
@@ -1040,22 +1135,21 @@ def main():
     print("\n=== Analiza PCA dla zrozumienia struktury danych ===")
     pca, pca_components = perform_pca_analysis(X_scaled, feature_names)
     
-    # 3. Równoległa analiza ważności cech w modelach
+    # 3. Równoległa analiza ważności cech w modelach z funkcjami tworzącymi instancje
     print("\n=== Analiza ważności cech w modelach uczenia maszynowego ===")
-    # Lista wszystkich modeli do analizy - zmieniona aby unikać lambda i zapewnić poprawną serializację
+    # Lista wszystkich modeli do analizy - używa nowych funkcji do tworzenia instancji
     models_to_analyze = [
-        (RandomForestModel, "Random Forest Feature Importance", "rf_importance.png", 'lollipop'),
-        (XGBoostModel, "XGBoost Feature Importance", "xgb_importance.png", 'bar'),
-        (GradientBoostingModel, "Gradient Boosting Feature Importance", "gb_importance.png", 'bar'),
-        (CatBoostModel, "CatBoost Feature Importance", "catboost_importance.png", 'bar'),
-        (SVMModel, "SVM (RBF) Feature Importance", "svm_rbf_importance.png", 'bar'),
-        (create_linear_svm, "SVM (Linear) Feature Importance", "svm_linear_importance.png", 'bar'),
-        (create_poly_svm, "SVM (Polynomial) Feature Importance", "svm_poly_importance.png", 'bar'),
-        (LogisticRegressionModel, "Logistic Regression Coefficients", "lr_coefficients.png", 'bar')
+        (create_random_forest_for_analysis, "Random Forest Feature Importance", "rf_importance.png", 'lollipop'),
+        (create_xgboost_for_analysis, "XGBoost Feature Importance", "xgb_importance.png", 'bar'),
+        (create_gradient_boosting_for_analysis, "Gradient Boosting Feature Importance", "gb_importance.png", 'bar'),
+        (create_catboost_for_analysis, "CatBoost Feature Importance", "catboost_importance.png", 'bar'),
+        (create_svm_for_analysis, "SVM (Optimized Kernel) Feature Importance", "svm_rbf_importance.png", 'bar'),
+        (create_linear_svm, "SVM (Linear - Hardcoded Defaults) Feature Importance", "svm_linear_importance.png", 'bar'),
+        (create_logistic_regression_for_analysis, "Logistic Regression Coefficients", "lr_coefficients.png", 'bar')
     ]
 
-    # Uruchom równoległą analizę modeli
-    model_results = analyze_models_parallel(models_to_analyze, X_scaled, y, feature_names)
+    # Uruchom równoległą analizę modeli - przekazując DataFrame z cechami
+    model_results = analyze_models_parallel(models_to_analyze, X.values, y.values, feature_names)
     
     # Zbierz wyniki z równoległej analizy
     importance_results = {}

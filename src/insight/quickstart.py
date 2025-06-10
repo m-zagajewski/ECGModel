@@ -29,9 +29,9 @@ QUICKSTART_CONFIG = {
     'base_output_dir': os.path.join(project_root, 'data/'), # Pozostawiam zgodnie z ostatnią zmianą użytkownika
     'feature_analysis_subdir': 'feature_analysis', # Dedykowany podkatalog
     'model_analysis_subdir': 'model_analysis',   # Dedykowany podkatalog
-    'selected_features_log_filename': 'selected_features.csv', # Nazwa pliku logu
+    'selected_features_log_filename': 'quickstart_input_data.csv', # Nazwa pliku logu
     'top_n_features_for_selection': 80,
-    'verbose': True,
+    'verbose': False,
     # Parametry do przyspieszenia analizy (opcjonalnie, można zakomentować dla pełnej analizy)
     #'feature_analysis_permutation_repeats': 5, # Domyślnie w analyze_features jest 10
     #'model_analysis_cv_folds': 3, # Domyślnie w analyze_models jest 5
