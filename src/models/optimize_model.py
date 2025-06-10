@@ -61,7 +61,7 @@ class ModelOptimizer:
 
     def __init__(self, 
                  model_class: Type[ECGBaseModel],
-                 n_iter: int = 50,
+                 n_iter: int = 100,
                  cv: int = 5,
                  n_jobs: int = -1,
                  random_state: int = 42):

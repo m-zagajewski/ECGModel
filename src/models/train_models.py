@@ -13,7 +13,7 @@ def main():
     # Load the preprocessed data
     import os
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_path = os.path.join(project_root, 'data/selected_features.csv')
+    data_path = os.path.join(project_root, 'data/quickstart_input_data.csv')
     data = pd.read_csv(data_path)
 
     # Assuming the last column is the target variable
@@ -27,7 +27,6 @@ def main():
         GradientBoostingModel(n_estimators=100, learning_rate=0.1),
         GradientBoostingModel(n_estimators=100, learning_rate=0.01),
         SVMModel(kernel='rbf', C=1.0),
-        SVMModel(kernel='linear', C=1.0),
         LogisticRegressionModel(C=1.0),
         CatBoostModel(iterations=100, learning_rate=0.1, depth=8),
         XGBoostModel(n_estimators=100, learning_rate=0.1, max_depth=6)
