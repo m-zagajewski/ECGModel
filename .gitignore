@@ -11,3 +11,4 @@ catboost_info/
 xgboost_info/
 random_forest_info/
 .pytest_cache/
+venv/
