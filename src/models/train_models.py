@@ -22,14 +22,14 @@ def main():
 
     # Initialize models with different parameters
     models = [
-        RandomForestModel(n_estimators=100, max_depth=10),
-        RandomForestModel(n_estimators=200, max_depth=None),
-        GradientBoostingModel(n_estimators=100, learning_rate=0.1),
-        GradientBoostingModel(n_estimators=100, learning_rate=0.01),
-        SVMModel(kernel='rbf', C=1.0),
-        LogisticRegressionModel(C=1.0),
-        CatBoostModel(iterations=100, learning_rate=0.1, depth=8),
-        XGBoostModel(n_estimators=100, learning_rate=0.1, max_depth=6)
+        RandomForestModel(),
+        RandomForestModel(),
+        GradientBoostingModel(),
+        GradientBoostingModel(),
+        SVMModel(),
+        LogisticRegressionModel(),
+        CatBoostModel(),
+        XGBoostModel()
     ]
 
     # Initialize the evaluator

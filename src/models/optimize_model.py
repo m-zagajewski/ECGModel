@@ -53,7 +53,6 @@ class ModelOptimizer:
             'n_estimators': Integer(50, 300),
             'learning_rate': Real(0.001, 0.3, prior='log-uniform'),
             'max_depth': Integer(3, 10),
-            'min_child_weight': Integer(1, 10),
             'subsample': Real(0.5, 1.0, prior='uniform'),
             'colsample_bytree': Real(0.5, 1.0, prior='uniform')
         }
