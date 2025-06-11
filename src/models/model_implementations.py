@@ -10,7 +10,7 @@ from src.models.base_model import ECGBaseModel
 class RandomForestModel(ECGBaseModel):
     def __init__(self, n_estimators: int = 100, max_depth: int = None, 
                  min_samples_split: int = 2, min_samples_leaf: int = 1,
-                 max_features: str = 'sqrt', random_state: int = 36,
+                 max_features: str = 'sqrt', random_state: int = 34,
                  class_weight: str = None): # Dodano class_weight
         super().__init__()
         self.n_estimators = n_estimators
@@ -216,7 +216,7 @@ class XGBoostModel(ECGBaseModel):
                  colsample_bytree: float = 1.0,
                  reg_alpha: float = 0, # Dodano reg_alpha
                  reg_lambda: float = 1, # Dodano reg_lambda
-                 random_state: int = 42): 
+                 random_state: int = 34):
         super().__init__()
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate

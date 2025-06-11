@@ -31,7 +31,7 @@ from src.models.base_model import ECGBaseModel
 # Globalna konfiguracja
 CONFIG = {
     'output_dir': os.path.join(project_root, 'data/model_analysis'),
-    'random_state': 34,
+    'random_state': 40,
     'test_size': 0.2,
     'cv_folds': 5,
     'verbose': True
@@ -53,7 +53,7 @@ def load_model_params(model_name):
     lub zwróć domyślne parametry, jeśli plik nie istnieje.
     """
     # Ścieżka do pliku z parametrami
-    params_file = os.path.join(project_root, f'model_optimization_results/{model_name}_best_params.json')
+    params_file = os.path.join(project_root, 'model_optimization_results', f'{model_name}_best_params.json')
     default_params = {
         'random_forest': {'n_estimators': 100, 'max_depth': 10, 'random_state': CONFIG['random_state']},
         'gradient_boosting': {'n_estimators': 200, 'learning_rate': 0.05, 'random_state': CONFIG['random_state']},
@@ -68,27 +68,40 @@ def load_model_params(model_name):
             with open(params_file, 'r') as f:
                 params = json.load(f)
             if CONFIG['verbose']:
-                print(f"Wczytano zoptymalizowane parametry dla {model_name}")
+                print(f"Wczytano zoptymalizowane parametry dla {model_name} z {params_file}")
+            
+            # Usuń niekompatybilne parametry
+            if model_name == 'svm':
+                if 'class_weight' in params:
+                    del params['class_weight']
+                    if CONFIG['verbose']:
+                        print(f"Usunięto nieobsługiwany parametr 'class_weight' dla SVM z pliku {params_file}.")
             
             # Upewnij się, że parametry zawierają random_state/random_seed dla reprodukowalności
-            if 'random_state' not in params and model_name != 'catboost':
-                params['random_state'] = CONFIG['random_state']
-            elif model_name == 'catboost' and 'random_seed' not in params:
-                params['random_seed'] = CONFIG['random_state']
-                
+            if model_name != 'catboost':
+                if 'random_state' not in params:
+                    params['random_state'] = CONFIG['random_state']
+            else: # CatBoost
+                if 'random_seed' not in params:
+                    params['random_seed'] = CONFIG['random_state']
+                # Dla CatBoost w analizie modeli, pozwalamy na verbose z pliku optymalizacji,
+                # ale jeśli nie ma, ustawiamy na 0 (zgodnie z default_params).
+                if 'verbose' not in params:
+                    params['verbose'] = default_params['catboost'].get('verbose', 0)
             return params
         else:
             if CONFIG['verbose']:
                 print(f"Plik zoptymalizowanych parametrów {params_file} nie znaleziony dla {model_name}. Używam domyślnych parametrów.")
-            return default_params.get(model_name, {'random_state': CONFIG['random_state']})
+            # Zwróć kopię, aby uniknąć modyfikacji oryginalnego słownika default_params
+            return default_params.get(model_name, {'random_state': CONFIG['random_state']}).copy()
     except Exception as e:
         if CONFIG['verbose']:
-            print(f"Błąd wczytywania parametrów dla {model_name}: {e}. Używam domyślnych parametrów.")
-        return default_params.get(model_name, {'random_state': CONFIG['random_state']})
+            print(f"Błąd wczytywania parametrów dla {model_name} z {params_file}: {e}. Używam domyślnych parametrów.")
+        return default_params.get(model_name, {'random_state': CONFIG['random_state']}).copy()
 
 def load_selected_data():
     """Wczytaj dane z pliku selected_features.csv."""
-    data_path = os.path.join(project_root, 'data/selected_features.csv')
+    data_path = os.path.join(project_root, 'data/quickstart_input_data.csv')
     if not os.path.exists(data_path):
         raise FileNotFoundError(
             f"Plik {data_path} nie został znaleziony. "
@@ -329,7 +342,7 @@ def main():
     X, y = load_selected_data()
     
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=CONFIG['test_size'], random_state=CONFIG['random_state'], stratify=y
+        X, y, test_size=CONFIG['test_size'], random_state=CONFIG['random_state'], stratify=y, shuffle=True
     )
     
     if CONFIG['verbose']:

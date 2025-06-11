@@ -55,7 +55,7 @@ class ModelOptimizer:
             'l1_ratio': Real(0.0, 1.0, prior='uniform')
         },
         CatBoostModel: {
-            'iterations': Integer(100, 3000),
+            'iterations': Integer(100, 1000),
             'learning_rate': Real(0.001, 0.5, prior='log-uniform'),
             'depth': Integer(3, 12),
             'l2_leaf_reg': Real(0.1, 10, prior='log-uniform'),
@@ -82,7 +82,7 @@ class ModelOptimizer:
                  n_iter: int = 100,
                  cv: int = 5,
                  n_jobs: int = -1,
-                 random_state: int = 42):
+                 random_state: int = 34):
         self.model_class = model_class
         self.n_iter = n_iter
         self.cv = cv
@@ -167,8 +167,8 @@ def main():
         #'gradient_boosting': GradientBoostingModel,
         #'svm': SVMModel,
         #'logistic_regression': LogisticRegressionModel,
-        #'catboost': CatBoostModel,
-        'xgboost': XGBoostModel
+        'catboost': CatBoostModel,
+        #'xgboost': XGBoostModel
     }
 
     output_dir = os.path.join(project_root, 'model_optimization_results')
@@ -186,7 +186,7 @@ def main():
         
         optimizer = ModelOptimizer(
             model_class=model_class,
-            n_iter=100, 
+            n_iter=20,
             cv=5,
             n_jobs=-1
         )

@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from typing import Optional, Dict, Any
 from sklearn.pipeline import make_pipeline
 
 
-class ECGBaseModel(ABC, BaseEstimator, ClassifierMixin):
+class ECGBaseModel(ABC, BaseEstimator):
     def __init__(self, scaler: Optional[BaseEstimator] = None):
         self.scaler = scaler if scaler is not None else StandardScaler()
         self.model = None
@@ -32,7 +32,6 @@ class ECGBaseModel(ABC, BaseEstimator, ClassifierMixin):
         return self._predict_proba(X_scaled)
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series, cv: int = 5, scoring: str = 'accuracy') -> Dict[str, Any]:
-        """Evaluate model performance using cross-validation."""
         pipeline = make_pipeline(self.scaler, self.model)
         scores = cross_val_score(pipeline, X, y, cv=cv, scoring=scoring)
         
@@ -44,12 +43,6 @@ class ECGBaseModel(ABC, BaseEstimator, ClassifierMixin):
             'scoring_metric': scoring
         }
         return results
-        
-    # Implementacja metody score wymaganej przez ClassifierMixin
-    def score(self, X, y):
-        """Return the accuracy score on the given test data and labels."""
-        from sklearn.metrics import accuracy_score
-        return accuracy_score(y, self.predict(X))
     
     @abstractmethod
     def _fit_model(self, X: np.ndarray, y: pd.Series):

@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from src.models.base_model import ECGBaseModel
 
 class ModelEvaluator:
-    def __init__(self, test_size: float = 0.2, random_state: int = 42):
+    def __init__(self, test_size: float = 0.2, random_state: int = 34):
         self.test_size = test_size
         self.random_state = random_state
         self.results = []
@@ -25,17 +25,30 @@ class ModelEvaluator:
             model.fit(X_train, y_train)
             
             # Get cross-validation results
+            # CV dla roc_auc powinno również używać predict_proba, co jest obsługiwane przez pipeline w ECGBaseModel.evaluate
             cv_results = model.evaluate(X_train, y_train, cv=cv, scoring=scoring)
             
             # Get test set performance
-            y_pred = model.predict(X_test)
-            test_score = self._calculate_score(y_test, y_pred, scoring)
+            y_pred_labels = model.predict(X_test) # Etykiety klas dla metryk takich jak accuracy, f1
+            
+            test_score_value = np.nan # Domyślnie NaN, jeśli nie można obliczyć
+
+            if scoring == 'roc_auc':
+                try:
+                    y_pred_probs = model.predict_proba(X_test)[:, 1] # Prawdopodobieństwa dla klasy pozytywnej
+                    test_score_value = self._calculate_score(y_test, y_pred_probs, scoring)
+                except AttributeError:
+                    print(f"Ostrzeżenie: Model {model.__class__.__name__} nie wspiera predict_proba. Nie można obliczyć roc_auc na zbiorze testowym.")
+                except Exception as e:
+                    print(f"Błąd podczas obliczania roc_auc dla {model.__class__.__name__} na zbiorze testowym: {e}")
+            else: # Dla innych metryk używamy etykiet
+                test_score_value = self._calculate_score(y_test, y_pred_labels, scoring)
             
             results = {
                 'model_name': model.__class__.__name__,
                 'cv_mean_score': cv_results['mean_score'],
                 'cv_std_score': cv_results['std_score'],
-                'test_score': test_score,
+                'test_score': test_score_value,
                 'scoring_metric': scoring
             }
             all_results.append(results)
@@ -66,10 +79,17 @@ class ModelEvaluator:
         from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
         
         if scoring == 'accuracy':
+            # y_pred powinny być etykietami
             return accuracy_score(y_true, y_pred)
         elif scoring == 'f1':
-            return f1_score(y_true, y_pred)
+            # y_pred powinny być etykietami
+            return f1_score(y_true, y_pred, zero_division=0)
         elif scoring == 'roc_auc':
+            # y_pred powinny być prawdopodobieństwami dla klasy pozytywnej
+            # Sprawdzenie, czy y_pred to prawdopodobieństwa (1D array)
+            if y_pred.ndim != 1:
+                # To nie powinno się zdarzyć, jeśli evaluate_models działa poprawnie
+                raise ValueError(f"Dla roc_auc, y_pred musi być jednowymiarową tablicą prawdopodobieństw, otrzymano kształt {y_pred.shape}")
             return roc_auc_score(y_true, y_pred)
         else:
             raise ValueError(f"Scoring metric {scoring} not implemented")

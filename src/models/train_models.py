@@ -45,7 +45,7 @@ def main():
         'gradient_boosting': GradientBoostingModel,
         'svm': SVMModel,
         'logistic_regression': LogisticRegressionModel,
-        #'catboost': CatBoostModel,
+        'catboost': CatBoostModel,
         'xgboost': XGBoostModel
     }
 
@@ -75,12 +75,12 @@ def main():
                 print(f"Nie znaleziono pliku z parametrami dla {model_name}. Używam domyślnych parametrów.")
                 # Domyślne parametry dla każdego modelu - bazujące na oryginalnych wartościach
                 default_params = {
-                    'random_forest': {'n_estimators': 100, 'max_depth': 10, 'random_state': 36},
+                    'random_forest': {'n_estimators': 100, 'max_depth': 10, 'random_state': 34}, # Zmieniono z 36 na 34
                     'gradient_boosting': {'n_estimators': 200, 'learning_rate': 0.05, 'random_state': 34},
                     'svm': {'kernel': 'rbf', 'C': 0.60, 'gamma': 'scale', 'probability': True, 'random_state': 34},
                     'logistic_regression': {'C': 1.0, 'penalty': 'l2', 'random_state': 34, 'max_iter': 1000},
                     'catboost': {'iterations': 1000, 'learning_rate': 0.1, 'depth': 6, 'random_seed': 34, 'verbose': False},
-                    'xgboost': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 3, 'random_state': 42}
+                    'xgboost': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 3, 'random_state': 34} # Zmieniono z 42 na 34
                 }
                 
                 model_params = default_params.get(model_name, {})

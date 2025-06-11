@@ -49,7 +49,7 @@ from src.models.model_implementations import (
     RandomForestModel, 
     XGBoostModel, 
     GradientBoostingModel,
-    CatBoostModel, 
+    CatBoostModel,
     SVMModel, 
     LogisticRegressionModel
 )
@@ -79,54 +79,88 @@ def load_model_params(model_name, analysis_name):
     Wczytaj zoptymalizowane parametry dla modelu z pliku JSON
     lub zwróć domyślne parametry do analizy, jeśli plik nie istnieje.
     """
-    # Ścieżka do pliku z parametrami
-    params_file = os.path.join(project_root, f'model_optimization_results/{model_name}_best_params.json')
+    params_file = os.path.join(project_root, 'model_optimization_results', f'{model_name}_best_params.json')
     
-    # Domyślne parametry dla modeli używanych w analizie cech - prostsze niż dla treningu
     analysis_default_params = {
         'random_forest': {'random_state': CONFIG['random_state']},
         'gradient_boosting': {'random_state': CONFIG['random_state']},
-        'svm': {'random_state': CONFIG['random_state'], 'probability': True},
+        'svm': {'random_state': CONFIG['random_state'], 'probability': True, 'kernel': 'rbf'}, # Dodano kernel dla pewności
         'logistic_regression': {'random_state': CONFIG['random_state'], 'max_iter': 1000},
         'catboost': {'random_seed': CONFIG['random_state'], 'verbose': 0},
         'xgboost': {'random_state': CONFIG['random_state']}
     }
     
-    try:
-        if os.path.exists(params_file):
+    loaded_params = None
+    source_message = "domyślnych parametrów analizy"
+
+    if os.path.exists(params_file):
+        try:
             with open(params_file, 'r') as f:
-                params = json.load(f)
+                loaded_params = json.load(f)
+            source_message = f"zoptymalizowanych parametrów z {params_file}"
+            if CONFIG['verbose']:
+                print(f"Wczytano {source_message} dla {analysis_name} ({model_name})")
             
-            # Upewnij się, że parametry zawierają random_state/random_seed dla reprodukowalności
-            if 'random_state' not in params and model_name != 'catboost':
-                params['random_state'] = CONFIG['random_state']
-            elif model_name == 'catboost' and 'random_seed' not in params:
-                params['random_seed'] = CONFIG['random_state']
-            
-            if model_name == 'catboost':  # Zawsze ustaw verbose=0 dla CatBoost w analizie
-                params['verbose'] = 0
-                
-            print(f"Wczytano zoptymalizowane parametry dla {analysis_name} ({model_name}): {params}")
-            return params
-        else:
-            print(f"Plik zoptymalizowanych parametrów {params_file} nie znaleziony dla {analysis_name} ({model_name}). Przechodzę do domyślnych/fabryki.")
-            return analysis_default_params.get(model_name, {'random_state': CONFIG['random_state']})
-    except Exception as e:
-        print(f"Błąd ładowania/użycia zopt. parametrów dla {analysis_name} ({model_name}): {e}. Przechodzę do domyślnych/fabryki.")
-        return analysis_default_params.get(model_name, {'random_state': CONFIG['random_state']})
+            # Usuń niekompatybilne parametry specyficzne dla modeli
+            if model_name == 'svm':
+                if 'class_weight' in loaded_params:
+                    del loaded_params['class_weight']
+                    if CONFIG['verbose']:
+                        print(f"Usunięto nieobsługiwany parametr 'class_weight' dla SVM w analizie '{analysis_name}'.")
+
+        except Exception as e:
+            if CONFIG['verbose']:
+                print(f"Błąd wczytywania pliku {params_file} dla {analysis_name} ({model_name}): {e}. Próba użycia domyślnych.")
+            loaded_params = None # Zapewnia przejście do logiki domyślnych parametrów
+
+    if loaded_params is None: # Jeśli plik nie istnieje lub wystąpił błąd wczytywania
+        loaded_params = analysis_default_params.get(model_name, {}).copy()
+        source_message = "domyślnych parametrów analizy"
+        # Komunikat tylko jeśli plik nie istniał; jeśli istniał i był błąd, komunikat był już wyżej
+        if CONFIG['verbose'] and not os.path.exists(params_file):
+             print(f"Plik zoptymalizowanych parametrów {params_file} nie znaleziony. Używam {source_message} dla {analysis_name} ({model_name}).")
+        elif CONFIG['verbose'] and os.path.exists(params_file): # Komunikat, jeśli był błąd wczytywania istniejącego pliku
+             print(f"Używam {source_message} dla {analysis_name} ({model_name}) po błędzie wczytywania zoptymalizowanych.")
+
+
+    # Zapewnij kluczowe parametry i nadpisania specyficzne dla analizy cech
+    if model_name != 'catboost':
+        if 'random_state' not in loaded_params:
+            loaded_params['random_state'] = CONFIG['random_state']
+    else: # CatBoost
+        if 'random_seed' not in loaded_params:
+            loaded_params['random_seed'] = CONFIG['random_state']
+        loaded_params['verbose'] = 0 # Kluczowe: zawsze nadpisz verbose dla CatBoost w analizie cech
+
+    if model_name == 'svm':
+        if 'probability' not in loaded_params: 
+            loaded_params['probability'] = True
+        # Jeśli kernel nie jest w załadowanych parametrach (np. z bardzo podstawowego domyślnego),
+        # upewnij się, że jest ustawiony. SVMModel i tak ma domyślny 'rbf'.
+        if 'kernel' not in loaded_params:
+            loaded_params['kernel'] = analysis_default_params['svm'].get('kernel','rbf')
+
+
+    if CONFIG['verbose']:
+        # Ten komunikat może być powtórzeniem, jeśli parametry zostały pomyślnie wczytane z pliku.
+        # Rozważmy jego usunięcie lub zmianę, aby był bardziej warunkowy.
+        # Na razie zostawiam dla spójności z poprzednią logiką.
+        print(f"Finalne parametry (źródło: {source_message}) dla {analysis_name} ({model_name}): {loaded_params}")
+        
+    return loaded_params
 
 # Funkcje pomocnicze dla serializacji w przetwarzaniu równoległym
 def create_model_instance(model_name, model_class, analysis_name):
     """Tworzy instancję modelu z odpowiednimi parametrami."""
+    params = {} # Inicjalizacja na wypadek błędu przed przypisaniem
     try:
-        params = load_model_params(model_name, analysis_name)
+        params = load_model_params(model_name, analysis_name) # load_model_params wyświetli szczegóły
         instance = model_class(**params)
-        print(f"Użyto domyślnych parametrów analizy dla {analysis_name} ({model_class.__name__}): {params}")
         return instance
     except Exception as e:
-        print(f"Błąd tworzenia instancji dla {analysis_name} ({model_class.__name__}): {e}")
-        print(f"Użyto fabryki do stworzenia instancji dla {analysis_name} ({model_class.__name__})")
-        return model_class()
+        print(f"Błąd tworzenia instancji dla {analysis_name} ({model_class.__name__}) z parametrami {params}: {e}")
+        print(f"Użyto fabryki (bez parametrów) do stworzenia instancji dla {analysis_name} ({model_class.__name__})")
+        return model_class() # Powrót do domyślnego konstruktora
 
 def create_random_forest_for_analysis():
     """Tworzy instancję RandomForest do analizy cech."""
@@ -247,10 +281,44 @@ def create_colormap(n_colors):
 def plot_feature_importance(importances, feature_names, title, top_n=20, filename=None, style='bar', subfolder=None):
     """Twórz atrakcyjne wykresy ważności cech z wieloma stylami wizualizacji"""
     # Sortuj według ważności
+    # Upewnij się, że importances nie jest puste i nie zawiera samych NaN
+    if importances is None or len(importances) == 0 or np.all(np.isnan(importances)):
+        if CONFIG['verbose']:
+            print(f"INFO: Brak danych o ważności dla '{title}'. Wykres nie zostanie wygenerowany.")
+        # Opcjonalnie: narysuj pusty wykres z informacją
+        plt.figure(figsize=(14, 10))
+        plt.text(0.5, 0.5, "Brak danych o ważności cech", horizontalalignment='center', verticalalignment='center', fontsize=12)
+        plt.title(title, fontsize=14, fontweight='bold')
+        if filename:
+            current_output_dir = CONFIG['output_dir']
+            if subfolder:
+                current_output_dir = os.path.join(CONFIG['output_dir'], subfolder)
+            os.makedirs(current_output_dir, exist_ok=True)
+            plt.savefig(os.path.join(current_output_dir, filename), dpi=300, bbox_inches='tight')
+        plt.close()
+        return
+
     idx = np.argsort(importances)[::-1][:top_n]
-    top_features = np.array(feature_names)[idx]
+    top_features_array = np.array(feature_names)[idx]
     top_importances = importances[idx]
+
+    if len(top_importances) == 0 or np.all(top_importances == 0):
+        if CONFIG['verbose']:
+            print(f"INFO: Brak istotnych cech (wszystkie wartości są zerowe lub puste po odfiltrowaniu top_n) do wyświetlenia dla '{title}'. Wykres może być pusty.")
+        plt.figure(figsize=(14, 10))
+        plt.text(0.5, 0.5, "Brak istotnych cech do wyświetlenia", horizontalalignment='center', verticalalignment='center', fontsize=12)
+        plt.title(title, fontsize=14, fontweight='bold')
+        if filename:
+            current_output_dir = CONFIG['output_dir']
+            if subfolder:
+                current_output_dir = os.path.join(CONFIG['output_dir'], subfolder)
+            os.makedirs(current_output_dir, exist_ok=True)
+            plt.savefig(os.path.join(current_output_dir, filename), dpi=300, bbox_inches='tight')
+        plt.close()
+        return
     
+    top_features = top_features_array.tolist() # Konwersja na listę dla spójności
+
     plt.figure(figsize=(14, 10))
     plt.grid(axis='x', linestyle='--', alpha=0.6)
     
@@ -335,11 +403,18 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         
         model_name = model.__class__.__name__
         
-        # Trenowanie modelu - ulepszony preprocessing
-        X_scaled = StandardScaler().fit_transform(X)
-        model._fit_model(X_scaled, y)
+        # Trenowanie modelu przy użyciu metody fit z ECGBaseModel, która obsługuje skalowanie
+        # X i y są np.ndarray, konwertujemy je na DataFrame/Series
+        X_df = pd.DataFrame(X, columns=feature_names)
+        y_series = pd.Series(y) # Zakładając, że y to 1D array
+        model.fit(X_df, y_series) # model.scaler zostanie nauczony tutaj
         
         # Determine approach for getting feature importances
+        # X_scaled_for_importance - dane używane do obliczenia ważności cech
+        # model.model to model sklearn/catboost/xgboost
+        # model.scaler to skaler z ECGBaseModel, już nauczony
+        X_scaled_for_importance = model.scaler.transform(X_df) # Używamy X_df, bo scaler oczekuje DataFrame
+
         if hasattr(model.model, "feature_importances_"):
             # Tree-based models
             importances = model.model.feature_importances_
@@ -358,8 +433,10 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
             
         else:
             # Permutation importance for other models - dodaj scoring
+            # Dla permutation_importance używamy modelu sklearn (model.model) i przeskalowanych danych
             perm_imp = permutation_importance(
-                model.model, X_scaled, y, n_repeats=CONFIG['permutation_repeats'], 
+                model.model, X_scaled_for_importance, y_series, 
+                n_repeats=CONFIG['permutation_repeats'], 
                 random_state=CONFIG['random_state'], n_jobs=1, scoring='f1'
             )
             importances = perm_imp.importances_mean
@@ -373,30 +450,108 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
         )
         
         # Generate SHAP plots if appropriate
-        shap_values = None
+        shap_values_for_output = None
         if SHAP_AVAILABLE:
             try:
-                # Użyj już przeskalowanych danych dla SHAP (zamiast oryginalnych X)
-                background_data = shap.sample(pd.DataFrame(X_scaled, columns=feature_names), 100)
-                explainer = shap.KernelExplainer(model.predict_proba, background_data)
-                shap_values = explainer.shap_values(background_data)
+                # Dla SHAP KernelExplainer, model.predict_proba oczekuje DataFrame (danych nieprzeskalowanych)
+                # background_data powinno być DataFrame. Używamy oryginalnego X (np.ndarray) i feature_names.
+                background_data_df = pd.DataFrame(X, columns=feature_names)
+                # Zmniejszono liczbę próbek tła dla przyspieszenia, ale może to wpłynąć na dokładność SHAP.
+                # Rozważ zwiększenie do 100 lub więcej dla finalnych analiz.
+                num_shap_samples = 30 # Można dostosować, np. CONFIG.get('shap_samples', 50)
+                sampled_background_data_df = shap.sample(background_data_df, num_shap_samples, random_state=CONFIG['random_state'])
 
-                plt.figure(figsize=(14, 10))
-                shap.summary_plot(shap_values[1], background_data,
-                                 feature_names=feature_names,
-                                 plot_type="bar", show=False)
-                plt.title(f"SHAP Values - {model_name}", fontsize=14, fontweight='bold')
-                plt.tight_layout()
+                # model.predict_proba wewnętrznie użyje model.scaler.transform()
+                explainer = shap.KernelExplainer(model.predict_proba, sampled_background_data_df)
                 
-                # Zapis SHAP do podfolderu modelu
-                shap_output_dir = os.path.join(CONFIG['output_dir'], model_name_for_path)
-                os.makedirs(shap_output_dir, exist_ok=True)
-                plt.savefig(os.path.join(shap_output_dir, f"shap_{model_name}.png"),
-                           dpi=300, bbox_inches='tight')
-                plt.close()
+                # Dane do wyjaśnienia (explain_data) również powinny być DataFrame
+                # Użyjemy sampled_background_data_df jako danych do wyjaśnienia
+                shap_values_raw = explainer.shap_values(sampled_background_data_df)
+
+                num_features = sampled_background_data_df.shape[1]
+                
+                # Uproszczona logika przetwarzania wartości SHAP
+                shap_values_for_plot = np.zeros((num_shap_samples, num_features)) # Domyślna inicjalizacja
+
+                if isinstance(shap_values_raw, list) and len(shap_values_raw) == 2:
+                    # Przypadek 1: Lista dwóch tablic (dla klasyfikacji binarnej)
+                    # Każdy element listy ma kształt (n_samples, n_features)
+                    shap_values_for_plot = shap_values_raw[1] # Bierzemy wartości dla klasy pozytywnej
+                elif isinstance(shap_values_raw, np.ndarray):
+                    if shap_values_raw.ndim == 2 and \
+                       shap_values_raw.shape[0] == num_shap_samples and \
+                       shap_values_raw.shape[1] == num_features:
+                        # Przypadek 2: Pojedyncza tablica 2D (np. regresja lub niektóre klasyfikacje)
+                        # Kształt (n_samples, n_features)
+                        shap_values_for_plot = shap_values_raw
+                    elif shap_values_raw.ndim == 3 and \
+                         shap_values_raw.shape[0] == num_shap_samples and \
+                         shap_values_raw.shape[1] == num_features and \
+                         shap_values_raw.shape[2] == 2: # Zakładamy klasyfikację binarną
+                        # Przypadek 3: Pojedyncza tablica 3D (n_samples, n_features, n_classes)
+                        if CONFIG['verbose']:
+                            print(f"DEBUG SHAP: shap_values_raw jest 3D ({shap_values_raw.shape}) dla {model_name}. Wybieram wartości dla klasy pozytywnej (indeks 1 ostatniego wymiaru).")
+                        shap_values_for_plot = shap_values_raw[:, :, 1] # Kształt (n_samples, n_features)
+                    else:
+                        # Nieobsługiwany kształt tablicy NumPy
+                        if CONFIG['verbose']:
+                            print(f"WARNING SHAP: Nieoczekiwany kształt tablicy NumPy shap_values_raw dla {model_name}: {shap_values_raw.shape}. Oczekiwano ({num_shap_samples}, {num_features}) lub ({num_shap_samples}, {num_features}, 2).")
+                else:
+                    # Nie lista i nie tablica NumPy, lub inny nieoczekiwany format
+                    if CONFIG['verbose']:
+                        print(f"WARNING SHAP: Nieoczekiwany format shap_values_raw dla {model_name}. Typ: {type(shap_values_raw)}")
+
+
+                # Sprawdzenie kształtu przed obliczeniem średniej
+                if shap_values_for_plot.ndim == 2 and shap_values_for_plot.shape[1] == num_features:
+                    shap_importance_values = np.abs(shap_values_for_plot).mean(axis=0) # Powinno dać (n_features,)
+                else:
+                    if CONFIG['verbose']:
+                        print(f"ERROR SHAP: shap_values_for_plot ma nieoczekiwany kształt {shap_values_for_plot.shape} dla {model_name}. Oczekiwano ({num_shap_samples}, {num_features}).")
+                    shap_importance_values = np.zeros(num_features) # Zapewnij poprawny kształt dla pd.Series
+
+                if CONFIG['verbose']:
+                    print(f"DEBUG SHAP: Kształt shap_importance_values dla {model_name}: {shap_importance_values.shape}")
+                    print(f"DEBUG SHAP: Kształt sampled_background_data_df.columns dla {model_name}: {sampled_background_data_df.columns.shape}")
+
+
+                # Tworzenie serii Pandas na podstawie poprawnie obliczonych shap_importance_values
+                if len(shap_importance_values) == len(sampled_background_data_df.columns):
+                    shap_importance_series = pd.Series(
+                        shap_importance_values, # Musi być 1D
+                        index=sampled_background_data_df.columns
+                    ).sort_values(ascending=False)
+                    shap_values_for_output = shap_importance_series
+                else:
+                    if CONFIG['verbose']:
+                        print(f"ERROR SHAP: Niezgodność liczby wartości ważności SHAP ({len(shap_importance_values)}) z liczbą cech ({len(sampled_background_data_df.columns)}) dla {model_name}.")
+                    shap_values_for_output = None
+                
+                # Wizualizacja
+                # Upewnij się, że shap_values_for_plot ma odpowiedni kształt dla summary_plot
+                if shap_values_for_plot.ndim == 2 and shap_values_for_plot.shape[0] == sampled_background_data_df.shape[0] and shap_values_for_plot.shape[1] == num_features:
+                    plt.figure(figsize=(14, 10))
+                    shap.summary_plot(shap_values_for_plot, sampled_background_data_df, 
+                                     plot_type="bar", show=False)
+                    plt.title(f"SHAP Values - {model_name}", fontsize=14, fontweight='bold')
+                    plt.tight_layout()
+                    
+                    # Zapis SHAP do podfolderu modelu
+                    shap_output_dir = os.path.join(CONFIG['output_dir'], model_name_for_path)
+                    os.makedirs(shap_output_dir, exist_ok=True)
+                    plt.savefig(os.path.join(shap_output_dir, f"shap_{model_name}.png"),
+                               dpi=300, bbox_inches='tight')
+                    plt.close()
+                else:
+                    if CONFIG['verbose']:
+                        print(f"WARNING SHAP: Nie można wygenerować summary_plot dla {model_name} z powodu nieprawidłowego kształtu shap_values_for_plot: {shap_values_for_plot.shape}")
+
+
             except Exception as e:
                 print(f"SHAP analysis failed for {model_name}: {str(e)}")
-                shap_values = None
+                import traceback
+                traceback.print_exc()
+                shap_values_for_output = None
 
         # Return the results
         results = {
@@ -405,18 +560,8 @@ def _generate_feature_importance_worker(model_info, X, y, feature_names):
             'importance_values': pd.Series(importances, index=feature_names).sort_values(ascending=False),
         }
 
-        if shap_values is not None:
-            # Dla modeli binarnych, shap_values[1] to wartości dla klasy pozytywnej
-            if isinstance(shap_values, list) and len(shap_values) > 1:
-                pos_class_shap = shap_values[1]
-            else:
-                pos_class_shap = shap_values
-                
-            shap_importance = pd.Series(
-                np.abs(pos_class_shap).mean(0),
-                index=feature_names
-            ).sort_values(ascending=False)
-            results['shap_values'] = shap_importance
+        if shap_values_for_output is not None:
+            results['shap_values'] = shap_values_for_output
 
         return results
 

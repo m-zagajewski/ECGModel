@@ -1,0 +1,354 @@
+Category,Feature
+Demographics,WIEK
+Demographics,male sex
+Demographics,migotanie przedsionków -jakiekolwiek
+Vital_Signs,GLASGOW
+Vital_Signs,GLASGOW.1
+Vital_Signs,MAP 1sza doba
+Vital_Signs,pao2/fio2 1sza doba
+Vital_Signs,"Wentylacja mechaniczna TAK=1, NIE =0 (TISS nr 1)"
+Vital_Signs,temperatura ciała przy przyjęciu (TISS nr 1)
+Other,Operowany przed przyjęciem (0/1)
+Other,CH_PRZEW_Brak
+Other,przewlekłe ciężkie choroby układu oddechowego
+Other,obniżenie odporności
+Other,"dobutamina przyjęcie tak=1, nie =0 (TISS nr 1)"
+Other,CTK skurczowe przyjęcie (TISS nr 1)
+Other,CTK rozkurczowe przyjęcie (TISS nr 1)
+Other,akcja serca przyjęcie (TISS nr 1)
+Other,FIO2 (TISS nr 1)
+Other,"Antybiotyki Tak=1, NIE =0)"
+Other,"argipresyna/empesin TAK=1, NIE=0 (TISS nr 1 godz. 0.00)"
+Other,argipresyna dawka  (TISS nr 1 godz. 0.00)
+Other,diureza w ml w ciągu pierwszych 6 godzin od przyjęcia 
+Other,"podaż płynów w dobie przyjęcia (ml) - okienko ""RAZEM"" po prawej stronie pod wierszem ""woda endogenna"" (TISS nr 1)"
+Other,bilans płynów w dobie przyjęcia (ml) (TISS 1)
+Other,pH (1. gaz. 1 TISS)
+Other,pCO2 (1. gaz. 1 TISS)
+Other,pO2 (1. gaz. 1 TISS)
+Other,Hb (1. gaz. 1 TISS)
+Other,K (1. gaz. 1 TISS)
+Other,Na (1. gaz. 1 TISS)
+Other,Ca2+ (1. gaz. 1 TISS)
+Other,Cl (1. gaz. 1 TISS)
+Other,sodium chloride difference
+Other,Glukoza (1. gaz. 1sza doba)
+Other,Lac (1. gaz. 1sza doba)
+Other,Crea (1. gaz. 1 TISS)
+Other,Bil (1. gaz. 1 TISS)
+Other,BE (1. gaz. 1sza doba)
+Other,HCO3 (1. gaz. 1 TISS)
+Other,mOsm (1. gaz. 1 TISS)
+Other,COVID-19
+Other,przewlekła choroba niedokrwienna serca
+Other,stan po przebyciu zawału serca
+Other,czynna choroba nowotworowa
+Other,"choroby psychiczne (depresja, schizofrenia, otępienie)"
+Other,"choroby neurologiczne (Ch. Parkinsona, choroby nerwowo-mięśniowe)"
+Other,Sepsa (0/1)
+Other,sodium chloride difference tiss 1
+Other,sodium chloride difference tiss 2
+Other,sodium chloride difference tiss 3
+Comorbidity,marskość wątroby i nadciśnienie wrotne
+Comorbidity,niewydolność krążenia_NYHA IV
+Comorbidity,niewydolność nerek wymagajaca dializ
+Comorbidity,cukrzyca
+Comorbidity,nadciśnienie
+Comorbidity,niewydolność nerek przewlekła
+Comorbidity,POCHP
+Comorbidity,astma
+Comorbidity,niewydolność wątroby przewlekła
+Comorbidity,niewydolność serca przewlekła
+Lab_Results,BILI TISS 1
+Medications,"dopamina przyjęcie tak=1, nie = 0 (TISS nr 1)"
+Medications,dopamina  dawka (TISS nr 1)
+Medications,"noradrenalina przyjęcie: tak=1, nie =0 (TISS nr 1)"
+Medications,noradrenalina przyjęcie dawka ug/kg/min (TISS nr 1)
+ECG_Quality,I_signal_quality
+ECG_Quality,II_signal_quality
+ECG_Quality,III_signal_quality
+ECG_Quality,aVR_signal_quality
+ECG_Quality,aVL_signal_quality
+ECG_Quality,aVF_signal_quality
+ECG_Quality,V1_signal_quality
+ECG_Quality,V2_signal_quality
+ECG_Quality,V3_signal_quality
+ECG_Quality,V4_signal_quality
+ECG_Quality,V5_signal_quality
+ECG_Quality,V6_signal_quality
+ECG_Quality,I_shannon_entropy
+ECG_Quality,I_signal_complexity
+ECG_Quality,I_snr_db
+ECG_Quality,II_shannon_entropy
+ECG_Quality,II_signal_complexity
+ECG_Quality,II_snr_db
+ECG_Quality,III_shannon_entropy
+ECG_Quality,III_signal_complexity
+ECG_Quality,III_snr_db
+ECG_Quality,aVR_shannon_entropy
+ECG_Quality,aVR_signal_complexity
+ECG_Quality,aVR_snr_db
+ECG_Quality,aVL_shannon_entropy
+ECG_Quality,aVL_signal_complexity
+ECG_Quality,aVL_snr_db
+ECG_Quality,aVF_shannon_entropy
+ECG_Quality,aVF_signal_complexity
+ECG_Quality,aVF_snr_db
+ECG_Quality,V3_shannon_entropy
+ECG_Quality,V3_signal_complexity
+ECG_Quality,V3_snr_db
+ECG_Quality,V1_shannon_entropy
+ECG_Quality,V1_signal_complexity
+ECG_Quality,V1_snr_db
+ECG_Quality,V5_shannon_entropy
+ECG_Quality,V5_signal_complexity
+ECG_Quality,V5_snr_db
+ECG_Quality,V6_shannon_entropy
+ECG_Quality,V6_signal_complexity
+ECG_Quality,V6_snr_db
+ECG_Quality,V2_shannon_entropy
+ECG_Quality,V2_signal_complexity
+ECG_Quality,V2_snr_db
+ECG_Quality,V4_shannon_entropy
+ECG_Quality,V4_signal_complexity
+ECG_Quality,V4_snr_db
+ECG_Other,II_mean
+ECG_Other,II_skewness
+ECG_Other,II_kurtosis
+ECG_Other,II_rms
+ECG_Other,II_zero_crossings
+ECG_Other,III_mean
+ECG_Other,III_skewness
+ECG_Other,III_kurtosis
+ECG_Other,III_rms
+ECG_Other,III_zero_crossings
+ECG_Other,aVL_skewness
+ECG_Other,aVL_kurtosis
+ECG_Other,aVL_rms
+ECG_Other,aVL_zero_crossings
+ECG_Other,aVF_skewness
+ECG_Other,aVF_kurtosis
+ECG_Other,aVF_rms
+ECG_Other,aVF_zero_crossings
+ECG_Other,V1_mean
+ECG_Other,V1_skewness
+ECG_Other,V1_kurtosis
+ECG_Other,V1_rms
+ECG_Other,V1_zero_crossings
+ECG_Other,V4_mean
+ECG_Other,V4_skewness
+ECG_Other,V4_kurtosis
+ECG_Other,V4_rms
+ECG_Other,V4_zero_crossings
+ECG_Other,I_skewness
+ECG_Other,I_kurtosis
+ECG_Other,I_rms
+ECG_Other,I_zero_crossings
+ECG_Other,aVR_skewness
+ECG_Other,aVR_kurtosis
+ECG_Other,aVR_rms
+ECG_Other,aVR_zero_crossings
+ECG_Other,V2_mean
+ECG_Other,V2_skewness
+ECG_Other,V2_kurtosis
+ECG_Other,V2_rms
+ECG_Other,V2_zero_crossings
+ECG_Other,V5_mean
+ECG_Other,V5_skewness
+ECG_Other,V5_kurtosis
+ECG_Other,V5_rms
+ECG_Other,V5_zero_crossings
+ECG_Other,V6_mean
+ECG_Other,V6_skewness
+ECG_Other,V6_kurtosis
+ECG_Other,V6_rms
+ECG_Other,V6_zero_crossings
+ECG_Other,V3_mean
+ECG_Other,V3_skewness
+ECG_Other,V3_kurtosis
+ECG_Other,V3_rms
+ECG_Other,V3_zero_crossings
+ECG_Basic,II_std
+ECG_Basic,III_std
+ECG_Basic,aVL_mean
+ECG_Basic,aVL_std
+ECG_Basic,aVF_mean
+ECG_Basic,aVF_std
+ECG_Basic,V1_std
+ECG_Basic,V4_std
+ECG_Basic,I_mean
+ECG_Basic,I_std
+ECG_Basic,aVR_mean
+ECG_Basic,aVR_std
+ECG_Basic,V2_std
+ECG_Basic,V5_std
+ECG_Basic,V6_std
+ECG_Basic,V3_std
+ECG_Rhythm,I_heart_rate
+ECG_Rhythm,I_hrv_rmssd
+ECG_Rhythm,I_hrv_sdnn
+ECG_Rhythm,II_heart_rate
+ECG_Rhythm,II_hrv_rmssd
+ECG_Rhythm,II_hrv_sdnn
+ECG_Rhythm,III_heart_rate
+ECG_Rhythm,III_hrv_rmssd
+ECG_Rhythm,III_hrv_sdnn
+ECG_Rhythm,aVR_heart_rate
+ECG_Rhythm,aVR_hrv_rmssd
+ECG_Rhythm,aVR_hrv_sdnn
+ECG_Rhythm,aVL_heart_rate
+ECG_Rhythm,aVL_hrv_rmssd
+ECG_Rhythm,aVL_hrv_sdnn
+ECG_Rhythm,aVF_heart_rate
+ECG_Rhythm,aVF_hrv_rmssd
+ECG_Rhythm,aVF_hrv_sdnn
+ECG_Rhythm,V3_heart_rate
+ECG_Rhythm,V3_hrv_rmssd
+ECG_Rhythm,V3_hrv_sdnn
+ECG_Rhythm,V1_heart_rate
+ECG_Rhythm,V1_hrv_rmssd
+ECG_Rhythm,V1_hrv_sdnn
+ECG_Rhythm,V5_heart_rate
+ECG_Rhythm,V5_hrv_rmssd
+ECG_Rhythm,V5_hrv_sdnn
+ECG_Rhythm,V6_heart_rate
+ECG_Rhythm,V6_hrv_rmssd
+ECG_Rhythm,V6_hrv_sdnn
+ECG_Rhythm,V2_heart_rate
+ECG_Rhythm,V2_hrv_rmssd
+ECG_Rhythm,V2_hrv_sdnn
+ECG_Rhythm,V4_heart_rate
+ECG_Rhythm,V4_hrv_rmssd
+ECG_Rhythm,V4_hrv_sdnn
+ECG_Waves,I_p_duration
+ECG_Waves,I_p_amplitude
+ECG_Waves,I_p_amplitude_var
+ECG_Waves,I_qrs_duration
+ECG_Waves,I_qrs_duration_var
+ECG_Waves,I_r_amplitude
+ECG_Waves,I_st_level
+ECG_Waves,I_st_slope
+ECG_Waves,I_t_amplitude
+ECG_Waves,II_p_duration
+ECG_Waves,II_p_amplitude
+ECG_Waves,II_p_amplitude_var
+ECG_Waves,II_qrs_duration
+ECG_Waves,II_qrs_duration_var
+ECG_Waves,II_r_amplitude
+ECG_Waves,II_st_level
+ECG_Waves,II_st_slope
+ECG_Waves,II_t_amplitude
+ECG_Waves,III_p_duration
+ECG_Waves,III_p_amplitude
+ECG_Waves,III_p_amplitude_var
+ECG_Waves,III_qrs_duration
+ECG_Waves,III_qrs_duration_var
+ECG_Waves,III_r_amplitude
+ECG_Waves,III_st_level
+ECG_Waves,III_st_slope
+ECG_Waves,III_t_amplitude
+ECG_Waves,III_qtc_mean
+ECG_Waves,III_qtc_sd
+ECG_Waves,aVR_p_duration
+ECG_Waves,aVR_p_amplitude
+ECG_Waves,aVR_p_amplitude_var
+ECG_Waves,aVR_qrs_duration
+ECG_Waves,aVR_qrs_duration_var
+ECG_Waves,aVR_r_amplitude
+ECG_Waves,aVR_st_level
+ECG_Waves,aVR_st_slope
+ECG_Waves,aVR_t_amplitude
+ECG_Waves,aVL_p_duration
+ECG_Waves,aVL_p_amplitude
+ECG_Waves,aVL_p_amplitude_var
+ECG_Waves,aVL_qrs_duration
+ECG_Waves,aVL_qrs_duration_var
+ECG_Waves,aVL_r_amplitude
+ECG_Waves,aVL_st_level
+ECG_Waves,aVL_st_slope
+ECG_Waves,aVL_t_amplitude
+ECG_Waves,aVL_qtc_mean
+ECG_Waves,aVL_qtc_sd
+ECG_Waves,aVF_p_duration
+ECG_Waves,aVF_p_amplitude
+ECG_Waves,aVF_p_amplitude_var
+ECG_Waves,aVF_qrs_duration
+ECG_Waves,aVF_qrs_duration_var
+ECG_Waves,aVF_r_amplitude
+ECG_Waves,aVF_st_level
+ECG_Waves,aVF_st_slope
+ECG_Waves,aVF_t_amplitude
+ECG_Waves,aVF_qtc_mean
+ECG_Waves,aVF_qtc_sd
+ECG_Waves,V3_p_duration
+ECG_Waves,V3_p_amplitude
+ECG_Waves,V3_p_amplitude_var
+ECG_Waves,V3_qrs_duration
+ECG_Waves,V3_qrs_duration_var
+ECG_Waves,V3_r_amplitude
+ECG_Waves,V3_st_level
+ECG_Waves,V3_st_slope
+ECG_Waves,V3_t_amplitude
+ECG_Waves,I_qtc_mean
+ECG_Waves,I_qtc_sd
+ECG_Waves,aVR_qtc_mean
+ECG_Waves,aVR_qtc_sd
+ECG_Waves,V1_p_duration
+ECG_Waves,V1_p_amplitude
+ECG_Waves,V1_p_amplitude_var
+ECG_Waves,V1_qrs_duration
+ECG_Waves,V1_qrs_duration_var
+ECG_Waves,V1_r_amplitude
+ECG_Waves,V1_st_level
+ECG_Waves,V1_st_slope
+ECG_Waves,V1_t_amplitude
+ECG_Waves,V1_qtc_mean
+ECG_Waves,V1_qtc_sd
+ECG_Waves,V5_p_duration
+ECG_Waves,V5_p_amplitude
+ECG_Waves,V5_p_amplitude_var
+ECG_Waves,V5_qrs_duration
+ECG_Waves,V5_qrs_duration_var
+ECG_Waves,V5_r_amplitude
+ECG_Waves,V5_st_level
+ECG_Waves,V5_st_slope
+ECG_Waves,V5_t_amplitude
+ECG_Waves,V5_qtc_mean
+ECG_Waves,V5_qtc_sd
+ECG_Waves,V6_p_duration
+ECG_Waves,V6_p_amplitude
+ECG_Waves,V6_p_amplitude_var
+ECG_Waves,V6_qrs_duration
+ECG_Waves,V6_qrs_duration_var
+ECG_Waves,V6_r_amplitude
+ECG_Waves,V6_st_level
+ECG_Waves,V6_st_slope
+ECG_Waves,V6_t_amplitude
+ECG_Waves,V6_qtc_mean
+ECG_Waves,V6_qtc_sd
+ECG_Waves,II_qtc_mean
+ECG_Waves,II_qtc_sd
+ECG_Waves,V2_p_duration
+ECG_Waves,V2_p_amplitude
+ECG_Waves,V2_p_amplitude_var
+ECG_Waves,V2_qrs_duration
+ECG_Waves,V2_qrs_duration_var
+ECG_Waves,V2_r_amplitude
+ECG_Waves,V2_st_level
+ECG_Waves,V2_st_slope
+ECG_Waves,V2_t_amplitude
+ECG_Waves,V2_qtc_mean
+ECG_Waves,V2_qtc_sd
+ECG_Waves,V3_qtc_mean
+ECG_Waves,V3_qtc_sd
+ECG_Waves,V4_p_duration
+ECG_Waves,V4_p_amplitude
+ECG_Waves,V4_p_amplitude_var
+ECG_Waves,V4_qrs_duration
+ECG_Waves,V4_qrs_duration_var
+ECG_Waves,V4_r_amplitude
+ECG_Waves,V4_st_level
+ECG_Waves,V4_st_slope
+ECG_Waves,V4_t_amplitude
+ECG_Waves,V4_qtc_mean
+ECG_Waves,V4_qtc_sd

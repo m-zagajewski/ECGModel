@@ -31,7 +31,7 @@ def cleaned_up(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The cleaned DataFrame.
     """
-    # Remove columns that contain 'error' or 'insufficient' in their names
+    # Remove columns that contain 'erro r' or 'insufficient' in their names
     cols_to_remove = [col for col in df.columns if
                       'error' in col.lower() or 'insufficient' in col.lower() or df[col].isnull().all()]
     df_cleaned = df.drop(columns=cols_to_remove, errors='ignore')

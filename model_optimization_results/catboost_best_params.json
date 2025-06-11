@@ -1,0 +1,10 @@
+{
+    "bagging_temperature": 4.167710384589079,
+    "border_count": 230,
+    "depth": 6,
+    "iterations": 986,
+    "l2_leaf_reg": 1.388289623579447,
+    "learning_rate": 0.005307190342638991,
+    "random_strength": 2.0374606231974988,
+    "verbose": false
+}

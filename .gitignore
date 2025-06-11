@@ -2,13 +2,11 @@
 example_output/
 config/
 __pycache__
-/data/
 .DS_Store
 workspace.xml
-model_optimization_results/
-model_comparison_results.csv
 catboost_info/
 xgboost_info/
 random_forest_info/
 .pytest_cache/
 venv/
+ecg/
