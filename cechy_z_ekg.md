@@ -1,3 +1,10 @@
+*1. Excel
+*2. Niewiara w dane z ekg
+*3. Neurokit2
+*4. 4 klastry cech
+*5. wybieranie top 80
+
+
 Kod przetwarza standardowe, 12-odprowadzeniowe EKG. Oznacza to, że dla każdego pacjenta analizuje sygnały z 12 różnych punktów "widzenia" na serce (odprowadzenia: I, II, III, aVR, aVL, aVF, V1-V6). **Wszystkie poniższe cechy są wyciągane dla każdego z 12 odprowadzeń osobno**, co daje bardzo bogaty zestaw danych (np. `V1_heart_rate`, `II_heart_rate` itd.).
 
 ---
